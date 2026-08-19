@@ -223,146 +223,145 @@ const ReelSlide = React.memo(({
             showCenterPlayPause={isActive && (showCenterControl || !isPlaying)}
             centerIsPlaying={isPlaying}
           />
-        </div>
 
-        {canManage && (
-          <div className="absolute top-2.5 left-2.5 z-30">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((o) => !o)}
-              className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-            >
-              <IconDots className="w-4 h-4" />
-            </button>
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => { setMenuOpen(false); setDeleteConfirm(false); }} />
-                <div className="absolute top-10 left-0 z-50 min-w-[140px] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => { setMenuOpen(false); onEditReel?.(reel); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  >
-                    <IconEdit className="w-3.5 h-3.5" /> Edit Reel
-                  </button>
-                  {!deleteConfirm ? (
-                    <button
-                      type="button"
-                      onClick={() => setDeleteConfirm(true)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
-                    >
-                      <IconTrash className="w-3.5 h-3.5" /> Delete
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      disabled={deleting}
-                      className="w-full px-3 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700"
-                    >
-                      {deleting ? 'Deleting...' : 'Confirm Delete'}
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className="absolute right-2 sm:right-3 reel-overlay-actions flex flex-col items-center gap-3 sm:gap-3.5 z-30 pointer-events-auto">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); handleLike(); }}
-            className="flex flex-col items-center gap-1 group touch-manipulation"
-            aria-label={isLiked ? 'Unlike' : 'Like'}
-            aria-pressed={isLiked}
-          >
-            <span className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${isLiked ? 'bg-rose-500/90 text-white scale-105' : 'bg-black/50 text-white group-hover:bg-black/70'
-              }`}>
-              <IconHeart className="w-4 h-4 sm:w-5 sm:h-5" filled={isLiked} />
-            </span>
-            {/* Public viewers: no numeric like count. Owner sees total on their own reel. */}
-            <span className="text-[10px] font-bold text-white drop-shadow leading-none">
-              {isOwnReel ? likesCount : (isLiked ? 'Liked' : 'Like')}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setCommentsOpen(true); }}
-            className="flex flex-col items-center gap-1 group touch-manipulation"
-            aria-label="Open comments"
-          >
-            <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-black/70">
-              <IconComment className="w-4 h-4 sm:w-5 sm:h-5" />
-            </span>
-            <span className="text-[10px] font-bold text-white drop-shadow leading-none">Comment</span>
-          </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); handleShare(); }} className="flex flex-col items-center gap-1 group touch-manipulation">
-            <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-black/70">
-              <IconShare className="w-4 h-4 sm:w-5 sm:h-5" />
-            </span>
-            <span className="text-[10px] font-bold text-white drop-shadow leading-none">Share</span>
-          </button>
-          {!isOwnReel && (
-            <button
-              type="button"
-              onClick={handleReportClick}
-              className="flex flex-col items-center gap-1 group touch-manipulation pointer-events-auto"
-              aria-label="Report reel"
-            >
-              <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-rose-500/80 transition-colors">
-                <IconFlag className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-              </span>
-              <span className="text-[10px] font-bold text-white drop-shadow leading-none">Report</span>
-            </button>
-          )}
-        </div>
-
-        <div className="absolute left-0 right-0 bottom-0 z-20 text-white reel-overlay-bottom pointer-events-none">
-          <div className="reel-meta-panel px-3 pb-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <button type="button" onClick={goToProfile} className="pointer-events-auto flex-shrink-0">
-                <Avatar src={author.avatar || author.profileImage} size="sm" className="!w-9 !h-9 ring-2 ring-white/30" />
+          {canManage && (
+            <div className="absolute top-2.5 left-2.5 z-30">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
+                className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+              >
+                <IconDots className="w-4 h-4" />
               </button>
-              <div className="min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={goToProfile}
-                  className="text-sm font-bold truncate drop-shadow-md hover:underline pointer-events-auto text-left block w-full leading-tight"
-                >
-                  {author.fullName || author.name || 'User'}
-                </button>
-                <button
-                  type="button"
-                  onClick={goToProfile}
-                  className="text-[11px] text-white/75 truncate pointer-events-auto text-left block w-full leading-tight mt-0.5"
-                >
-                  @{author.username || author.handle?.replace('@', '') || 'user'}
-                </button>
-              </div>
-              {!isOwnReel && (
-                <div className="pointer-events-auto flex-shrink-0 self-center">
-                  <FollowButton
-                    isFollowing={following}
-                    followRequestPending={followPending}
-                    followDisabled={followDisabled}
-                    onToggleFollow={handleFollow}
-                    className="!py-1 !px-3 !text-[10px] !whitespace-nowrap"
-                  />
-                </div>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => { setMenuOpen(false); setDeleteConfirm(false); }} />
+                  <div className="absolute top-10 left-0 z-50 min-w-[140px] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); onEditReel?.(reel); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      <IconEdit className="w-3.5 h-3.5" /> Edit Reel
+                    </button>
+                    {!deleteConfirm ? (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirm(true)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                      >
+                        <IconTrash className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="w-full px-3 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700"
+                      >
+                        {deleting ? 'Deleting...' : 'Confirm Delete'}
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
-            {caption && (
-              <p className="text-xs leading-snug line-clamp-2 drop-shadow-md mt-2 pointer-events-none">{caption}</p>
+          )}
+
+          <div className="reel-overlay-actions absolute flex flex-col items-center gap-3 z-30 pointer-events-auto">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleLike(); }}
+              className="flex flex-col items-center gap-1 group touch-manipulation"
+              aria-label={isLiked ? 'Unlike' : 'Like'}
+              aria-pressed={isLiked}
+            >
+              <span className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${isLiked ? 'bg-rose-500/90 text-white scale-105' : 'bg-black/50 text-white group-hover:bg-black/70'
+                }`}>
+                <IconHeart className="w-5 h-5" filled={isLiked} />
+              </span>
+              <span className="text-[10px] font-bold text-white drop-shadow leading-none">
+                {isOwnReel ? likesCount : (isLiked ? 'Liked' : 'Like')}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setCommentsOpen(true); }}
+              className="flex flex-col items-center gap-1 group touch-manipulation"
+              aria-label="Open comments"
+            >
+              <span className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-black/70">
+                <IconComment className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-bold text-white drop-shadow leading-none">Comment</span>
+            </button>
+            <button type="button" onClick={(e) => { e.stopPropagation(); handleShare(); }} className="flex flex-col items-center gap-1 group touch-manipulation">
+              <span className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-black/70">
+                <IconShare className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-bold text-white drop-shadow leading-none">Share</span>
+            </button>
+            {!isOwnReel && (
+              <button
+                type="button"
+                onClick={handleReportClick}
+                className="flex flex-col items-center gap-1 group touch-manipulation pointer-events-auto"
+                aria-label="Report reel"
+              >
+                <span className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-rose-500/80 transition-colors">
+                  <IconFlag className="w-[18px] h-[18px]" />
+                </span>
+                <span className="text-[10px] font-bold text-white drop-shadow leading-none">Report</span>
+              </button>
             )}
-            {hashtagLine && (
-              <p className="text-[10px] text-cyan-300/90 mt-1 line-clamp-1 pointer-events-none">{hashtagLine}</p>
-            )}
-            {reel.location && (
-              <p className="text-[10px] text-white/70 mt-1 flex items-center gap-1 pointer-events-none">
-                <IconLocation className="w-3 h-3 flex-shrink-0" /> {reel.location}
-              </p>
-            )}
+          </div>
+
+          <div className="reel-overlay-bottom absolute left-0 right-0 bottom-0 z-20 text-white pointer-events-none">
+            <div className="reel-meta-panel">
+              <div className="flex items-center gap-2 min-w-0">
+                <button type="button" onClick={goToProfile} className="pointer-events-auto flex-shrink-0">
+                  <Avatar src={author.avatar || author.profileImage} size="sm" className="!w-9 !h-9 ring-2 ring-white/30" />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={goToProfile}
+                    className="text-sm font-bold truncate drop-shadow-md hover:underline pointer-events-auto text-left block w-full leading-tight"
+                  >
+                    {author.fullName || author.name || 'User'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToProfile}
+                    className="text-[11px] text-white/80 truncate pointer-events-auto text-left block w-full leading-tight mt-0.5"
+                  >
+                    @{author.username || author.handle?.replace('@', '') || 'user'}
+                  </button>
+                </div>
+                {!isOwnReel && (
+                  <div className="pointer-events-auto flex-shrink-0 self-center">
+                    <FollowButton
+                      isFollowing={following}
+                      followRequestPending={followPending}
+                      followDisabled={followDisabled}
+                      onToggleFollow={handleFollow}
+                      className="!py-1 !px-3 !text-[10px] !whitespace-nowrap"
+                    />
+                  </div>
+                )}
+              </div>
+              {caption && (
+                <p className="text-xs leading-snug line-clamp-2 drop-shadow-md mt-2">{caption}</p>
+              )}
+              {hashtagLine && (
+                <p className="text-[10px] text-cyan-300/90 mt-1 line-clamp-1">{hashtagLine}</p>
+              )}
+              {reel.location && (
+                <p className="text-[10px] text-white/70 mt-1 flex items-center gap-1">
+                  <IconLocation className="w-3 h-3 flex-shrink-0" /> {reel.location}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
