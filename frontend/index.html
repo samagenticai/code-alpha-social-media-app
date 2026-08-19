@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="description" content="Pulse — Connect Beyond Limits. A premium social platform." />
+    <meta name="theme-color" content="#070a12" />
+    <title>Pulse | Connect Beyond Limits</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+    <script>
+      (function() {
+        const _warn = console.warn;
+        console.warn = function(...args) {
+          if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+          _warn.apply(console, args);
+        };
+      })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      (function() {
+        const theme = localStorage.getItem('pulse_theme') || localStorage.getItem('synora_theme') || 'dark';
+        document.documentElement.classList.add(theme);
+      })();
+    </script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                50: '#eef2ff',
+                100: '#e0e7ff',
+                500: '#6366f1',
+                600: '#4f46e5',
+                700: '#4338ca',
+                cyan: '#06b6d4',
+                purple: '#8b5cf6',
+                pink: '#ec4899',
+              },
+              dark: {
+                base: '#090d16',
+                surface: '#0f172a',
+                card: '#131c31',
+                border: 'rgba(255, 255, 255, 0.08)',
+                hover: '#1e293b'
+              }
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'float': 'float 6s ease-in-out infinite',
+              'glow': 'glow 2s ease-in-out infinite alternate',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-6px)' },
+              },
+              glow: {
+                '0%': { opacity: '0.4', filter: 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.4))' },
+                '100%': { opacity: '1', filter: 'drop-shadow(0 0 16px rgba(139, 92, 246, 0.8))' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-[#f4f6fb] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white overflow-x-hidden transition-colors duration-300">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

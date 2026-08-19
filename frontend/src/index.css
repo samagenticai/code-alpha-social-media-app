@@ -1,0 +1,642 @@
+/* Synora Design System - Instant-Synchronized Theme Engine */
+@layer base {
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    overflow-x: hidden;
+  }
+}
+
+:root {
+  --bg-base: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(226, 232, 240, 0.9);
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --modal-backdrop: rgba(15, 23, 42, 0.45);
+  --modal-backdrop-blur: blur(12px);
+}
+
+html.dark,
+body.dark,
+.dark {
+  --bg-base: #070a12;
+  --bg-surface: #0f172a;
+  --bg-card: rgba(15, 23, 42, 0.95);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --modal-backdrop: rgba(2, 6, 23, 0.85);
+  --modal-backdrop-blur: blur(16px);
+}
+
+.theme-modal-backdrop {
+  background-color: var(--modal-backdrop) !important;
+  backdrop-filter: var(--modal-backdrop-blur) !important;
+  -webkit-backdrop-filter: var(--modal-backdrop-blur) !important;
+  transition: background-color 0.2s ease-out, backdrop-filter 0.2s ease-out !important;
+}
+
+/* Targeted smooth theme transition for core containers instead of expensive global wildcard */
+body,
+.glass-panel,
+button,
+input,
+textarea,
+select {
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out;
+}
+
+/* Hardware Acceleration & Smooth Scroll Optimization */
+body,
+.reels-scroll-container,
+main {
+  -webkit-overflow-scrolling: touch;
+}
+
+:root {
+  --reels-viewport: 100dvh;
+  --reels-safe-top: env(safe-area-inset-top, 0px);
+  --reels-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --reels-safe-x: max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --reels-mobile-chrome: calc(4rem + var(--reels-safe-bottom));
+  --reels-desktop-chrome: 0.5rem;
+}
+
+@supports not (height: 100dvh) {
+  :root {
+    --reels-viewport: 100vh;
+  }
+}
+
+.reels-viewport-root {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.reels-scroll-container {
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: contain;
+  scroll-behavior: auto;
+  touch-action: pan-y;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.reel-slide {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  height: 100%;
+  min-height: 100%;
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  contain: layout style;
+}
+
+.reel-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #020617;
+}
+
+.reel-card-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.reel-card-inner video {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.reel-overlay-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.reel-overlay-actions {
+  bottom: max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.25rem));
+  pointer-events: auto;
+  z-index: 30;
+}
+
+.reel-meta-panel {
+  pointer-events: none;
+  max-width: calc(100% - 3.5rem);
+}
+
+.reel-progress-bar {
+  bottom: 0;
+}
+
+@media (max-width: 639px) {
+  .reel-overlay-bottom {
+    padding-bottom: calc(2.05rem + env(safe-area-inset-bottom, 0px));
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: 3.75rem;
+  }
+
+  .reel-overlay-actions {
+    bottom: calc(2.45rem + env(safe-area-inset-bottom, 0px));
+    right: max(0.5rem, env(safe-area-inset-right, 0px));
+    z-index: 30;
+  }
+
+  .reel-progress-bar {
+    bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .reel-meta-panel {
+    max-width: calc(100% - 3.25rem);
+  }
+}
+
+@media (min-width: 640px) {
+  .reel-slide {
+    align-items: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .reel-card {
+    width: min(100%, calc(760px * 9 / 16));
+    height: min(760px, 100%);
+    max-height: min(760px, calc(var(--reels-viewport) - 2rem));
+    aspect-ratio: 9 / 16;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (max-width: 639px) {
+  .reel-slide {
+    contain: strict;
+  }
+
+  .reel-card {
+    border-radius: 0;
+  }
+
+  .reels-ambient-bg {
+    display: none;
+  }
+
+  .reels-viewport-root {
+    height: 100%;
+    min-height: 0;
+    contain: strict;
+  }
+
+  .reels-scroll-container {
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .reel-card-inner {
+    transform: translateZ(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .reel-slide {
+    scroll-snap-stop: always !important;
+  }
+}
+
+.gpu-accelerate {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.45);
+}
+
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+}
+
+/* 60fps Mobile Scroll Optimization */
+.post-card {
+  contain: layout style;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+html.dark .post-card {
+  background: rgba(15, 23, 42, 0.98);
+}
+
+/* Live backdrop blur has to be re-rasterised for every scroll frame. Phones get
+   opaque panels instead; the visual difference is negligible at this alpha. */
+@media (max-width: 767px) {
+  .post-card,
+  .glass-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html.dark .glass-panel {
+    background: rgba(15, 23, 42, 0.97);
+  }
+
+  html.light .glass-panel,
+  :root:not(.dark) .glass-panel {
+    background: rgba(255, 255, 255, 0.98);
+  }
+}
+
+html.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+html.light .glass-panel,
+:root:not(.dark) .glass-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+
+.glass-panel-interactive {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+}
+
+.glass-panel-interactive:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.15);
+}
+
+.glow-brand {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.4);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.4);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes ringPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.live-pulse {
+  animation: ringPulse 2s infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.25s ease-out;
+}
+
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* App viewport — stable mobile height (avoids 100vh address-bar jump) */
+.app-viewport {
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+@supports not (height: 100dvh) {
+  .app-viewport {
+    height: 100vh;
+    max-height: 100vh;
+  }
+}
+
+/* Story viewer — full-screen mobile, no upward shift */
+.story-viewer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  touch-action: manipulation;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@supports not (height: 100dvh) {
+  .story-viewer-root {
+    height: 100vh;
+    max-height: 100vh;
+  }
+}
+
+.story-viewer-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  background: #020617;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 640px) {
+  .story-viewer-root {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--modal-backdrop);
+    backdrop-filter: var(--modal-backdrop-blur);
+    -webkit-backdrop-filter: var(--modal-backdrop-blur);
+    padding: 1rem;
+  }
+
+  .story-viewer-frame {
+    width: 100%;
+    max-width: 28rem;
+    height: min(90dvh, 750px);
+    max-height: min(90dvh, 750px);
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  }
+}
+
+.story-viewer-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #020617;
+}
+
+.story-viewer-media video,
+.story-viewer-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.reel-card-inner video,
+.reel-card-inner .reel-video-layer {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Feed media frames.
+   Sized with aspect-ratio + px caps only. Viewport units (vh/dvh) must never be
+   used here: mobile browsers recompute them while the URL bar hides/shows during
+   scroll, which resizes every post mid-scroll and breaks scroll anchoring. */
+.post-video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 400px;
+  overflow: hidden;
+  background: #0f172a;
+  flex-shrink: 0;
+}
+
+.post-video-element {
+  object-fit: cover;
+  object-position: center;
+}
+
+.post-video-skeleton {
+  background: #0f172a;
+}
+
+/* Feed image posts — separate from video sizing */
+.post-image-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+html.dark .post-image-container {
+  background: #0f172a;
+}
+
+.post-image-container--single {
+  aspect-ratio: 4 / 5;
+  max-height: 380px;
+}
+
+.post-image-container--grid {
+  aspect-ratio: 1 / 1;
+  max-height: 12rem;
+}
+
+@media (min-width: 640px) {
+  .post-video-container {
+    aspect-ratio: 16 / 9;
+    max-height: 460px;
+  }
+
+  .post-image-container--single {
+    aspect-ratio: 4 / 3;
+    max-height: 420px;
+  }
+
+  .post-image-container--grid {
+    max-height: 14rem;
+  }
+
+  .reel-card-inner video,
+  .reel-card-inner .reel-video-layer {
+    object-fit: contain;
+  }
+}
+
+/* Placeholders must never become the browser's scroll anchor, otherwise replacing
+   them with real posts (or growing the batch) shifts the user's scroll position. */
+.post-skeleton,
+.feed-scroll-sentinel {
+  overflow-anchor: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.feed-scroll-sentinel {
+  flex-shrink: 0;
+  height: 1px;
+  width: 100%;
+}
+
+.feed-end-notice {
+  overflow-anchor: none;
+}
+
+/* A full batch of skeletons means ~100 shimmer layers. Keep the animation on
+   desktop, but fall back to one cheap card-level pulse on phones. */
+@media (max-width: 767px) {
+  .post-skeleton .skeleton-shimmer::after {
+    animation: none;
+  }
+
+  .post-skeleton {
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes skeletonPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.65;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after,
+  .post-skeleton {
+    animation: none;
+  }
+}
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.3) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  content: '';
+}
+
+.dark .skeleton-shimmer::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(255, 255, 255, 0.1) 60%,
+    rgba(255, 255, 255, 0)
+  );
+}
+
+/* Decorative ambient orbs are 500–600px surfaces with a 140–160px blur that GSAP
+   animates continuously. On mobile they exhaust compositor tile memory during fast
+   scroll, so Chrome drops tiles and the feed paints blank. Desktop keeps them. */
+@media (max-width: 767px) {
+  .ambient-orb-1,
+  .ambient-orb-2,
+  .ambient-orb-3 {
+    display: none;
+  }
+}

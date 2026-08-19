@@ -1,0 +1,11 @@
+node_modules
+
+# Environment — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*

@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+frontend/dist/
+frontend/dist-ssr/
+backend/dist/
+*.local
+
+# Vercel
+.vercel/
+
+# Environment — never commit secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temp uploads (Cloudinary is used — no local persistence)
+uploads/
+tmp/
+temp/
+coverage/
+.cache/
