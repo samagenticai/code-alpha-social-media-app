@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IconPlay, IconPause, IconVolume, IconVolumeOff } from '../ui/Icons';
+import { getCloudinaryThumbnailUrl, getOptimizedCloudinaryVideoUrl } from '../../utils/reelMedia';
 
 /** True only for actual video files — never image thumbnails */
 export const isVideoMediaUrl = (url) => {
   if (!url || typeof url !== 'string') return false;
+  if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)) return false;
   const u = url.toLowerCase();
   if (/\.(mp4|webm|mov|mkv)(\?|$)/i.test(u)) return true;
   if (u.includes('/video/upload/')) return true;
@@ -28,50 +30,50 @@ export const resolvePostVideoUrl = (post) => {
   const raw = candidates.find(isVideoMediaUrl) || '';
   if (!raw) return '';
 
-  // Normalize Cloudinary delivery for reliable HTML5 video frames (not audio-only blank)
-  if (raw.includes('cloudinary.com') && raw.includes('/upload/')) {
-    if (/\/upload\/[^/]*f_auto/.test(raw)) {
-      return raw.replace(/f_auto/g, 'f_mp4');
-    }
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-    if (isMobile && !/\/upload\/[^/]*(?:f_mp4|q_auto)/.test(raw)) {
-      return raw.replace('/upload/', '/upload/f_mp4,q_auto:good,w_720,c_limit/');
-    }
-  }
-  return raw;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  return getOptimizedCloudinaryVideoUrl(raw, { mobile: isMobile }) || raw;
 };
 
 export const resolvePostVideoThumb = (post, vUrl) => {
   if (!post || !vUrl) return '';
-  const isMp4 = vUrl.match(/\.(mp4|webm|mov)(\?.*)?$/i) || vUrl.includes('video/upload');
-  return (
-    post.video?.thumbnail ||
-    post.thumbnailUrl ||
-    (isMp4 && vUrl.includes('cloudinary.com')
-      ? vUrl.replace('/upload/', '/upload/so_0/').replace(/\.(mp4|mov|webm)$/i, '.jpg')
-      : '')
-  );
+  const explicit = post.video?.thumbnail || post.thumbnailUrl || '';
+  if (explicit && !isVideoMediaUrl(explicit)) return explicit;
+  return getCloudinaryThumbnailUrl(vUrl);
+};
+
+const pauseOtherFeedVideos = (except) => {
+  document.querySelectorAll('.feed-video-player video').forEach((v) => {
+    if (v !== except && !v.paused) {
+      try {
+        v.pause();
+      } catch {
+        /* ignore */
+      }
+    }
+  });
 };
 
 /**
- * Stable inline feed video — fixed aspect container, no popup, no layout shift.
- * Memoized by postId + videoUrl so likes/comments don't remount the <video>.
+ * Stable inline feed video — fixed aspect container, visible frames, reliable pause.
  */
 export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, videoUrl, thumbUrl }) {
   const containerRef = useRef(null);
   const videoRef = useRef(null);
   const progressRef = useRef(null);
   const rafRef = useRef(null);
+  const centerTimerRef = useRef(null);
+  const wantPlayRef = useRef(false);
+
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  const [hasFrame, setHasFrame] = useState(false);
   const [isBuffering, setIsBuffering] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showCenterIcon, setShowCenterIcon] = useState(false);
-  const centerTimerRef = useRef(null);
   const [shouldLoad, setShouldLoad] = useState(false);
 
-  // Lazy attach src when near viewport — container stays reserved immediately
+  const safePoster = thumbUrl && !isVideoMediaUrl(thumbUrl) ? thumbUrl : undefined;
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el || !videoUrl) return undefined;
@@ -82,25 +84,24 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
           setShouldLoad(true);
           return;
         }
-        // Leaving the viewport pauses playback but never tears down the post.
         const video = videoRef.current;
         if (video && !video.paused) {
+          wantPlayRef.current = false;
           try {
             video.pause();
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
           setIsPlaying(false);
         }
       },
-      { rootMargin: '200px 0px', threshold: 0.01 }
+      { rootMargin: '240px 0px', threshold: 0.01 }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, [videoUrl]);
 
-  // Only the playing video runs a progress loop. Running one per mounted video
-  // put a style write for every feed video into every frame, which starved the
-  // main thread during scrolling.
   useEffect(() => {
     if (!isPlaying) return undefined;
 
@@ -124,54 +125,95 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
     centerTimerRef.current = setTimeout(() => setShowCenterIcon(false), 650);
   }, []);
 
-  useEffect(() => () => {
-    if (centerTimerRef.current) clearTimeout(centerTimerRef.current);
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  useEffect(
+    () => () => {
+      wantPlayRef.current = false;
+      if (centerTimerRef.current) clearTimeout(centerTimerRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      const video = videoRef.current;
+      if (video) {
+        try {
+          video.pause();
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    []
+  );
+
+  const markFrame = useCallback(() => {
+    setHasFrame(true);
+    setIsBuffering(false);
   }, []);
 
-  const handleTogglePlay = useCallback((e) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    const video = videoRef.current;
-    if (!video || hasError) return;
+  const handleTogglePlay = useCallback(
+    (e) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      setShouldLoad(true);
 
-    if (video.paused) {
-      document.querySelectorAll('.feed-video-player video').forEach((v) => {
-        if (v !== video && !v.paused) {
-          try { v.pause(); } catch { /* ignore */ }
-        }
-      });
-      video.play()
-        .then(() => {
-          setIsPlaying(true);
-          flashCenterIcon();
-        })
-        .catch(() => {
-          video.muted = true;
-          setIsMuted(true);
-          video.play()
+      const video = videoRef.current;
+      if (!video || hasError) return;
+
+      if (video.paused) {
+        pauseOtherFeedVideos(video);
+        wantPlayRef.current = true;
+        video.muted = isMuted;
+        const playAttempt = video.play();
+        if (playAttempt?.then) {
+          playAttempt
             .then(() => {
+              if (!wantPlayRef.current) {
+                video.pause();
+                setIsPlaying(false);
+                return;
+              }
               setIsPlaying(true);
+              markFrame();
               flashCenterIcon();
             })
-            .catch(() => {});
-        });
-    } else {
-      video.pause();
-      setIsPlaying(false);
-      flashCenterIcon();
-    }
-  }, [hasError, flashCenterIcon]);
+            .catch(() => {
+              if (!wantPlayRef.current) return;
+              video.muted = true;
+              setIsMuted(true);
+              video
+                .play()
+                .then(() => {
+                  if (!wantPlayRef.current) {
+                    video.pause();
+                    setIsPlaying(false);
+                    return;
+                  }
+                  setIsPlaying(true);
+                  markFrame();
+                  flashCenterIcon();
+                })
+                .catch(() => {});
+            });
+        }
+      } else {
+        wantPlayRef.current = false;
+        video.pause();
+        setIsPlaying(false);
+        flashCenterIcon();
+      }
+    },
+    [hasError, isMuted, flashCenterIcon, markFrame]
+  );
 
-  const handleToggleMute = useCallback((e) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    const next = !isMuted;
-    video.muted = next;
-    setIsMuted(next);
-  }, [isMuted]);
+  const handleToggleMute = useCallback(
+    (e) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      const video = videoRef.current;
+      if (!video) return;
+      const next = !isMuted;
+      video.muted = next;
+      setIsMuted(next);
+    },
+    [isMuted]
+  );
 
   if (!videoUrl) return null;
 
@@ -187,12 +229,11 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
         if (e.key === ' ' || e.key === 'Enter') handleTogglePlay(e);
       }}
     >
-      {/* Poster stays under the video until the first decoded frame is confirmed */}
-      {!isReady && (
-        <div className="post-video-skeleton absolute inset-0 z-[1]">
-          {thumbUrl ? (
+      {!hasFrame && (
+        <div className="post-video-skeleton absolute inset-0 z-[1] pointer-events-none">
+          {safePoster ? (
             <img
-              src={thumbUrl}
+              src={safePoster}
               alt=""
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
@@ -201,7 +242,6 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
           ) : (
             <div className="absolute inset-0 skeleton-shimmer bg-slate-800/80" />
           )}
-          <div className="absolute inset-0 bg-slate-950/20" />
         </div>
       )}
 
@@ -209,40 +249,49 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
         <video
           ref={videoRef}
           src={videoUrl}
-          poster={thumbUrl || undefined}
+          poster={safePoster}
           preload="metadata"
           loop
           playsInline
           muted={isMuted}
           disablePictureInPicture
-          className="post-video-element absolute inset-0 w-full h-full z-[2]"
-          style={{ opacity: 1, visibility: 'visible' }}
-          onLoadedMetadata={() => { setIsReady(true); setIsBuffering(false); }}
-          onLoadedData={() => { setIsReady(true); setIsBuffering(false); }}
-          onCanPlay={() => { setIsReady(true); setIsBuffering(false); }}
-          onPlaying={() => { setIsPlaying(true); setIsBuffering(false); setIsReady(true); }}
+          className="post-video-element"
+          onLoadedMetadata={markFrame}
+          onLoadedData={markFrame}
+          onCanPlay={markFrame}
+          onPlaying={() => {
+            if (!wantPlayRef.current) {
+              videoRef.current?.pause();
+              setIsPlaying(false);
+              return;
+            }
+            setIsPlaying(true);
+            markFrame();
+          }}
           onTimeUpdate={() => {
             const v = videoRef.current;
-            if (v && v.currentTime > 0) {
-              setIsReady(true);
-              setIsBuffering(false);
-            }
+            if (v && v.currentTime > 0) markFrame();
           }}
-          onPause={() => setIsPlaying(false)}
+          onPause={() => {
+            if (!wantPlayRef.current) setIsPlaying(false);
+          }}
           onWaiting={() => setIsBuffering(true)}
-          onError={() => { setHasError(true); setIsBuffering(false); }}
+          onError={() => {
+            setHasError(true);
+            setIsBuffering(false);
+          }}
         />
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none z-[3]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none z-[3]" />
 
-      {isBuffering && shouldLoad && !hasError && (
+      {isBuffering && shouldLoad && !hasError && !hasFrame && (
         <div className="absolute inset-0 z-[4] flex items-center justify-center pointer-events-none">
           <div className="w-10 h-10 rounded-full border-2 border-white/15 border-t-cyan-400 animate-spin" />
         </div>
       )}
 
-      {(showCenterIcon || (!isPlaying && isReady && !hasError)) && (
+      {(showCenterIcon || (!isPlaying && hasFrame && !hasError)) && (
         <div className="absolute inset-0 z-[5] flex items-center justify-center pointer-events-none">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-xl">
             {isPlaying ? (
@@ -263,6 +312,7 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
               e.stopPropagation();
               setHasError(false);
               setIsBuffering(true);
+              setHasFrame(false);
               videoRef.current?.load();
             }}
             className="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 rounded-lg text-xs font-bold pointer-events-auto"
@@ -272,12 +322,11 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
         </div>
       )}
 
-      {/* Controls — progress pinned to bottom edge of container */}
       <div className="absolute inset-x-0 bottom-0 z-[7] pointer-events-none">
-        <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-[2]">
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20">
           <div ref={progressRef} className="h-full bg-brand-500 transition-none" style={{ width: '0%' }} />
         </div>
-        <div className="absolute right-2 bottom-3 pointer-events-auto z-[3]">
+        <div className="absolute right-2 bottom-3 pointer-events-auto">
           <button
             type="button"
             onClick={handleToggleMute}

@@ -563,7 +563,34 @@ export const ReelsViewer = ({
   }, [volume]);
 
   const handleTogglePlay = useCallback(() => {
-    setIsPlaying((p) => !p);
+    setIsPlaying((prev) => {
+      const next = !prev;
+      // Immediately sync the active DOM video — don't wait only on React state
+      const container = containerRef.current;
+      const activeSlide = container?.querySelector(`.reel-slide[data-reel-index="${activeIndexRef.current}"]`);
+      const video = activeSlide?.querySelector('video');
+      if (video) {
+        if (next) {
+          document.querySelectorAll('.reel-slide video').forEach((v) => {
+            if (v !== video) {
+              try {
+                v.pause();
+              } catch {
+                /* ignore */
+              }
+            }
+          });
+          video.play().catch(() => {});
+        } else {
+          try {
+            video.pause();
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      return next;
+    });
   }, []);
 
   const handleVolumeChange = (newVol) => {
