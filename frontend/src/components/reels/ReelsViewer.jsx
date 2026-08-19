@@ -206,11 +206,8 @@ const ReelSlide = React.memo(({
               )}
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25 pointer-events-none z-[5] rounded-[inherit]" />
-
-          {!isPlaying && isActive && (
-            <div className="absolute inset-0 bg-black/20 pointer-events-none z-[8] rounded-[inherit]" aria-hidden />
-          )}
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-[5]" />
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent pointer-events-none z-[5]" />
 
           <ReelVideoControls
             videoRef={videoRef}
@@ -480,18 +477,7 @@ export const ReelsViewer = ({
       setIsPlaying(true);
       return;
     }
-    stopAllReelMedia();
     setIsPlaying(true);
-    // Kick the active slide's video after React commits the new active index
-    requestAnimationFrame(() => {
-      const container = containerRef.current;
-      const slide = container?.querySelector(`.reel-slide[data-reel-index="${activeIndexRef.current}"]`);
-      const video = slide?.querySelector('video');
-      if (video) {
-        video.muted = true;
-        video.play().catch(() => {});
-      }
-    });
   }, [activeIndex]);
 
   useEffect(() => {
@@ -502,36 +488,40 @@ export const ReelsViewer = ({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !reels.length) return;
+    if (!container || !reels.length) return undefined;
 
     const slides = container.querySelectorAll('.reel-slide');
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let bestIdx = -1;
-        let bestRatio = 0;
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const idx = Number(entry.target.dataset.reelIndex);
-          if (entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            bestIdx = idx;
-          }
-        });
-        if (bestIdx >= 0 && bestRatio >= 0.55 && bestIdx !== activeIndexRef.current) {
-          stopAllReelMedia();
-          activeIndexRef.current = bestIdx;
-          setActiveIndex(bestIdx);
-        }
-      },
-      { root: container, threshold: [0.55, 0.65, 0.75, 0.9] }
-    );
-
     slides.forEach((slide, idx) => {
       slide.dataset.reelIndex = String(idx);
-      observer.observe(slide);
     });
 
-    return () => observer.disconnect();
+    const pickActive = () => {
+      const rootRect = container.getBoundingClientRect();
+      if (!rootRect.height) return;
+      const mid = rootRect.top + rootRect.height / 2;
+      let bestIdx = activeIndexRef.current;
+      slides.forEach((slide, idx) => {
+        const r = slide.getBoundingClientRect();
+        if (r.top <= mid && r.bottom >= mid) bestIdx = idx;
+      });
+      if (bestIdx !== activeIndexRef.current) {
+        const prev = container.querySelector(
+          `.reel-slide[data-reel-index="${activeIndexRef.current}"] video`
+        );
+        try {
+          prev?.pause();
+        } catch {
+          /* ignore */
+        }
+        activeIndexRef.current = bestIdx;
+        setActiveIndex(bestIdx);
+        setIsPlaying(true);
+      }
+    };
+
+    container.addEventListener('scroll', pickActive, { passive: true });
+    pickActive();
+    return () => container.removeEventListener('scroll', pickActive);
   }, [reels.length]);
 
   useEffect(() => {
@@ -687,9 +677,8 @@ export const ReelsViewer = ({
   }
 
   return (
-    <div className="reels-viewport-root relative h-full min-h-0 bg-[#070a12] md:border md:border-slate-800/80 md:shadow-2xl md:rounded-2xl">
-      {/* Fixed solid stage background — do not swap blurred thumbs (that looked like "bg changing") */}
-      <div className="absolute inset-0 z-0 bg-[#070a12] pointer-events-none md:rounded-2xl" aria-hidden />
+    <div className="reels-viewport-root relative h-full min-h-0 bg-[#070a12]">
+      <div className="absolute inset-0 z-0 bg-[#070a12] pointer-events-none" aria-hidden />
 
       <CreateReelModal
         isOpen={editOpen}
