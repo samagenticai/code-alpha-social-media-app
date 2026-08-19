@@ -849,7 +849,7 @@ export const FeedApp = () => {
           className={`flex-1 min-w-0 h-full ${activeTab === 'messages'
           ? (activeChatUser ? 'overflow-hidden p-0 max-w-none w-full pb-0' : 'overflow-hidden p-0 sm:p-2 md:p-3 max-w-none w-full pb-16 md:pb-0')
           : activeTab === 'videos'
-            ? 'overflow-hidden p-0 max-w-none w-full h-full min-h-0 pb-16 md:pb-0'
+            ? 'overflow-y-auto overflow-x-hidden p-0 max-w-none w-full h-full min-h-0 pb-16 md:pb-0 bg-[#070a12]'
             : 'overflow-y-auto no-scrollbar py-3 sm:py-6 px-2.5 sm:px-4 pb-24 md:pb-12 mx-auto ' + (activeTab === 'search' || activeTab === 'settings' || activeTab === 'notifications' || activeTab === 'explore' || activeTab === 'followRequests' ? 'max-w-none w-full' : 'max-w-2xl')
           }`}>
           {activeTab === 'home' && (

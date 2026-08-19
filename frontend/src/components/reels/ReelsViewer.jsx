@@ -417,13 +417,8 @@ export const ReelsViewer = ({
   const [error, setError] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(() => {
-    try {
-      return sessionStorage.getItem(REELS_MUTE_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  // Muted by default so autoplay is allowed; user can unmute with the speaker control
+  const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(0.8);
   const [editReel, setEditReel] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -487,6 +482,16 @@ export const ReelsViewer = ({
     }
     stopAllReelMedia();
     setIsPlaying(true);
+    // Kick the active slide's video after React commits the new active index
+    requestAnimationFrame(() => {
+      const container = containerRef.current;
+      const slide = container?.querySelector(`.reel-slide[data-reel-index="${activeIndexRef.current}"]`);
+      const video = slide?.querySelector('video');
+      if (video) {
+        video.muted = true;
+        video.play().catch(() => {});
+      }
+    });
   }, [activeIndex]);
 
   useEffect(() => {
@@ -681,25 +686,10 @@ export const ReelsViewer = ({
     );
   }
 
-  const activeReel = reels[activeIndex];
-  const activeThumb = activeReel ? resolveReelThumbnail(activeReel) : '';
-
   return (
-    <div className="reels-viewport-root relative h-full min-h-0 overflow-hidden bg-slate-950 md:rounded-2xl md:border md:border-slate-800/80 md:shadow-2xl">
-      <div className="reels-ambient-bg absolute inset-0 overflow-hidden pointer-events-none z-0 hidden md:block">
-        {activeThumb ? (
-          <img
-            src={activeThumb}
-            alt=""
-            className="w-full h-full object-cover opacity-35 scale-105 filter blur-xl"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-tr from-brand-900/40 via-slate-950 to-purple-900/40" />
-        )}
-        <div className="absolute inset-0 bg-slate-950/40" />
-      </div>
+    <div className="reels-viewport-root relative h-full min-h-0 bg-[#070a12] md:border md:border-slate-800/80 md:shadow-2xl md:rounded-2xl">
+      {/* Fixed solid stage background — do not swap blurred thumbs (that looked like "bg changing") */}
+      <div className="absolute inset-0 z-0 bg-[#070a12] pointer-events-none md:rounded-2xl" aria-hidden />
 
       <CreateReelModal
         isOpen={editOpen}
@@ -711,7 +701,7 @@ export const ReelsViewer = ({
 
       <div
         ref={containerRef}
-        className="reels-scroll-container relative z-10 no-scrollbar"
+        className="reels-scroll-container relative z-10 no-scrollbar bg-[#070a12]"
       >
         {reels.map((reel, idx) => (
           <ReelSlide

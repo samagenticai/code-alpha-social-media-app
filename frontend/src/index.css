@@ -77,8 +77,10 @@ main {
 .reels-viewport-root {
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  /* NEVER overflow:hidden + border-radius here — Chromium blanks nested <video> frames */
+  overflow: visible;
   touch-action: pan-y;
+  background: #070a12;
 }
 
 .reels-scroll-container {
@@ -90,6 +92,7 @@ main {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: scroll;
+  background: #070a12;
 }
 
 .reel-slide {
@@ -224,14 +227,16 @@ main {
     align-items: center;
     padding-left: 0;
     padding-right: 0;
+    background: #070a12;
   }
 
   .reel-card {
-    width: min(100%, calc(760px * 9 / 16));
-    height: min(760px, 100%);
-    max-height: min(760px, calc(var(--reels-viewport) - 2rem));
+    width: min(100%, 420px);
+    height: auto;
+    max-height: min(760px, calc(100% - 1rem));
     aspect-ratio: 9 / 16;
     border-radius: 1rem;
+    background: #070a12;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
 }
