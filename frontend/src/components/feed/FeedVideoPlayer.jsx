@@ -229,20 +229,16 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
         if (e.key === ' ' || e.key === 'Enter') handleTogglePlay(e);
       }}
     >
-      {!hasFrame && (
-        <div className="post-video-skeleton absolute inset-0 z-[1] pointer-events-none">
-          {safePoster ? (
-            <img
-              src={safePoster}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <div className="absolute inset-0 skeleton-shimmer bg-slate-800/80" />
-          )}
-        </div>
+      {/* Poster under video — stage never looks empty while frames decode */}
+      {safePoster && (
+        <img
+          src={safePoster}
+          alt=""
+          className="absolute inset-0 z-[1] w-full h-full object-cover pointer-events-none rounded-[inherit]"
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+        />
       )}
 
       {shouldLoad && (

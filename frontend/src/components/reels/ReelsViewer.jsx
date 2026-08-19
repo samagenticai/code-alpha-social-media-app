@@ -206,10 +206,10 @@ const ReelSlide = React.memo(({
               )}
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 pointer-events-none z-[5]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25 pointer-events-none z-[5] rounded-[inherit]" />
 
           {!isPlaying && isActive && (
-            <div className="absolute inset-0 bg-black/30 pointer-events-none z-[8]" aria-hidden />
+            <div className="absolute inset-0 bg-black/20 pointer-events-none z-[8] rounded-[inherit]" aria-hidden />
           )}
 
           <ReelVideoControls

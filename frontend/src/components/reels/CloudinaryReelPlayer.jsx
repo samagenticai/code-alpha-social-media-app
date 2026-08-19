@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { getOptimizedCloudinaryVideoUrl, isVideoFileUrl } from '../../utils/reelMedia';
 
+/**
+ * Reels <video> player.
+ * IMPORTANT: ancestors must NOT combine overflow:hidden + border-radius —
+ * Chromium blanks video frames while audio still plays.
+ */
 export const CloudinaryReelPlayer = ({
   videoUrl,
   thumbnailUrl,
@@ -13,8 +18,7 @@ export const CloudinaryReelPlayer = ({
 }) => {
   const internalRef = useRef(null);
   const videoRef = externalRef || internalRef;
-  const playGenRef = useRef(0);
-  const wantPlayRef = useRef(false);
+  const playTokenRef = useRef(0);
   const userMutedRef = useRef(isMuted);
 
   const [isBuffering, setIsBuffering] = useState(false);
@@ -33,12 +37,9 @@ export const CloudinaryReelPlayer = ({
       ? thumbnailUrl
       : undefined;
 
-  wantPlayRef.current = Boolean(isActive && isPlaying && optimizedUrl && !hasError);
-
   useEffect(() => {
     return () => {
-      playGenRef.current += 1;
-      wantPlayRef.current = false;
+      playTokenRef.current += 1;
       const video = videoRef.current;
       if (video) {
         try {
@@ -54,7 +55,7 @@ export const CloudinaryReelPlayer = ({
     setHasError(false);
     setIsBuffering(false);
     setHasFrame(false);
-  }, [videoUrl, optimizedUrl]);
+  }, [optimizedUrl]);
 
   useEffect(() => {
     userMutedRef.current = isMuted;
@@ -63,57 +64,34 @@ export const CloudinaryReelPlayer = ({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return undefined;
+    if (!video || !optimizedUrl) return undefined;
 
-    playGenRef.current += 1;
-    const gen = playGenRef.current;
-
-    const markFrame = () => {
-      if (gen !== playGenRef.current) return;
+    const onFrame = () => {
       setHasFrame(true);
       setIsBuffering(false);
     };
-
-    const onWaiting = () => {
-      if (gen !== playGenRef.current) return;
-      setIsBuffering(true);
-    };
-
-    const onPlaying = () => {
-      if (gen !== playGenRef.current) return;
-      if (!wantPlayRef.current) {
-        try {
-          video.pause();
-        } catch {
-          /* ignore */
-        }
-        return;
-      }
-      markFrame();
-    };
-
+    const onWaiting = () => setIsBuffering(true);
     const onError = () => {
-      if (gen !== playGenRef.current) return;
       setIsBuffering(false);
       setHasError(true);
     };
 
-    video.addEventListener('loadedmetadata', markFrame);
-    video.addEventListener('loadeddata', markFrame);
-    video.addEventListener('canplay', markFrame);
-    video.addEventListener('playing', onPlaying);
-    video.addEventListener('timeupdate', markFrame);
+    video.addEventListener('loadedmetadata', onFrame);
+    video.addEventListener('loadeddata', onFrame);
+    video.addEventListener('canplay', onFrame);
+    video.addEventListener('playing', onFrame);
+    video.addEventListener('timeupdate', onFrame);
     video.addEventListener('waiting', onWaiting);
     video.addEventListener('error', onError);
 
-    if (video.readyState >= 2) markFrame();
+    if (video.readyState >= 2) onFrame();
 
     return () => {
-      video.removeEventListener('loadedmetadata', markFrame);
-      video.removeEventListener('loadeddata', markFrame);
-      video.removeEventListener('canplay', markFrame);
-      video.removeEventListener('playing', onPlaying);
-      video.removeEventListener('timeupdate', markFrame);
+      video.removeEventListener('loadedmetadata', onFrame);
+      video.removeEventListener('loadeddata', onFrame);
+      video.removeEventListener('canplay', onFrame);
+      video.removeEventListener('playing', onFrame);
+      video.removeEventListener('timeupdate', onFrame);
       video.removeEventListener('waiting', onWaiting);
       video.removeEventListener('error', onError);
     };
@@ -121,34 +99,30 @@ export const CloudinaryReelPlayer = ({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !optimizedUrl) return;
+    if (!video || !optimizedUrl) return undefined;
 
+    const token = ++playTokenRef.current;
     const vol = Math.max(0, Math.min(1, volume));
     video.volume = vol;
     video.muted = isMuted || vol === 0;
 
-    playGenRef.current += 1;
-    const gen = playGenRef.current;
-
     if (!isActive || !isPlaying || hasError || document.hidden) {
-      wantPlayRef.current = false;
       try {
         video.pause();
       } catch {
         /* ignore */
       }
       setIsBuffering(false);
-      return;
+      return undefined;
     }
 
-    wantPlayRef.current = true;
     setIsBuffering(true);
+    let cancelled = false;
 
     const tryPlay = async () => {
-      if (gen !== playGenRef.current || !wantPlayRef.current) return;
       try {
         await video.play();
-        if (gen !== playGenRef.current || !wantPlayRef.current) {
+        if (cancelled || token !== playTokenRef.current) {
           video.pause();
           return;
         }
@@ -156,7 +130,7 @@ export const CloudinaryReelPlayer = ({
         setHasFrame(true);
         setIsBuffering(false);
       } catch {
-        if (gen !== playGenRef.current || !wantPlayRef.current) return;
+        if (cancelled || token !== playTokenRef.current) return;
         if (!userMutedRef.current) {
           setAutoplayBlocked(true);
           onAutoplayBlocked?.();
@@ -164,7 +138,7 @@ export const CloudinaryReelPlayer = ({
         video.muted = true;
         try {
           await video.play();
-          if (gen !== playGenRef.current || !wantPlayRef.current) {
+          if (cancelled || token !== playTokenRef.current) {
             video.pause();
             return;
           }
@@ -177,6 +151,10 @@ export const CloudinaryReelPlayer = ({
     };
 
     tryPlay();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isActive, isPlaying, hasError, optimizedUrl, isMuted, volume, videoRef, onAutoplayBlocked]);
 
   useEffect(() => {
@@ -184,37 +162,31 @@ export const CloudinaryReelPlayer = ({
       const video = videoRef.current;
       if (!video || !isActive) return;
       if (document.hidden) {
-        wantPlayRef.current = false;
-        video.muted = true;
         video.pause();
       } else if (isPlaying) {
-        wantPlayRef.current = true;
         const vol = Math.max(0, Math.min(1, volume));
         video.volume = vol;
         video.muted = isMuted || vol === 0;
         video.play().catch(() => {});
       }
     };
-
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pagehide', handleVisibility);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pagehide', handleVisibility);
-    };
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [isActive, isPlaying, isMuted, volume, videoRef]);
 
   if (!videoUrl || !optimizedUrl) return null;
 
   return (
-    <div className="reel-player-root relative w-full h-full bg-slate-950 overflow-hidden select-none">
-      {safePoster && !hasFrame && (
+    <div className="reel-player-root">
+      {/* Poster always under the video so the stage is never an empty black void */}
+      {safePoster && (
         <img
           src={safePoster}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-[1]"
+          className="reel-poster-layer"
           loading="eager"
           decoding="async"
+          draggable={false}
         />
       )}
 
@@ -222,7 +194,7 @@ export const CloudinaryReelPlayer = ({
         ref={videoRef}
         src={optimizedUrl}
         poster={safePoster}
-        className="reel-video-layer absolute inset-0 w-full h-full z-[2] bg-black"
+        className="reel-video-layer"
         loop
         playsInline
         webkit-playsinline="true"
@@ -233,51 +205,38 @@ export const CloudinaryReelPlayer = ({
       />
 
       {isBuffering && !hasError && !hasFrame && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[4]">
+        <div className="reel-buffer-layer">
           <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-brand-400 animate-spin" />
         </div>
       )}
 
       {autoplayBlocked && isMuted && isPlaying && (
         <div className="absolute bottom-24 inset-x-0 z-[5] flex justify-center pointer-events-none px-4">
-          <span className="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-[11px] font-semibold text-white border border-white/15 shadow-lg">
+          <span className="px-3 py-1.5 rounded-full bg-black/70 text-[11px] font-semibold text-white border border-white/15">
             Tap sound icon to unmute
           </span>
         </div>
       )}
 
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-white p-6 text-center z-[6]">
-          {safePoster && (
-            <img
-              src={safePoster}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover opacity-30 blur-sm pointer-events-none"
-            />
-          )}
-          <div className="relative z-10 bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-white/10 max-w-xs shadow-2xl space-y-2.5">
-            <p className="text-xs font-bold text-slate-200">Video playback issue</p>
-            <p className="text-[10px] text-slate-400">
-              This video could not be streamed smoothly on your current network.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setHasError(false);
-                setHasFrame(false);
-                setIsBuffering(true);
-                const video = videoRef.current;
-                if (video) {
-                  video.load();
-                  wantPlayRef.current = true;
-                  video.play().catch(() => {});
-                }
-              }}
-              className="px-4 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer"
-            >
-              Retry
-            </button>
-          </div>
+        <div className="absolute inset-0 z-[6] flex flex-col items-center justify-center bg-slate-950/90 text-white p-6 text-center">
+          <p className="text-xs font-bold mb-2">Video playback issue</p>
+          <button
+            type="button"
+            onClick={() => {
+              setHasError(false);
+              setHasFrame(false);
+              setIsBuffering(true);
+              const video = videoRef.current;
+              if (video) {
+                video.load();
+                video.play().catch(() => {});
+              }
+            }}
+            className="px-4 py-1.5 bg-brand-600 rounded-lg text-xs font-bold"
+          >
+            Retry
+          </button>
         </div>
       )}
     </div>
