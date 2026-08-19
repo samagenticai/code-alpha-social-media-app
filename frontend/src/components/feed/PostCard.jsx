@@ -241,12 +241,12 @@ export const PostCard = React.memo(({ post, user, isGuest, onRequireAuth, onEdit
         title: post.video?.title || 'Updated Video Clip.mp4',
       } : undefined,
     };
-    onEditPost?.(post.id, updatedPostData);
+    onEditPost?.(postId, updatedPostData);
     setShowEditModal(false);
   };
 
   const handleConfirmDelete = () => {
-    onDeletePost?.(post.id);
+    onDeletePost?.(postId);
     setShowDeleteModal(false);
   };
 

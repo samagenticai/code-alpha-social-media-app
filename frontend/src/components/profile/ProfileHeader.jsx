@@ -113,7 +113,7 @@ export const ProfileHeader = ({
   const canSendMessage = whoCanMessage === 'everyone' || (whoCanMessage === 'following' && isFollowing) || (whoCanMessage === 'followers' && isFollowing);
 
   return (
-    <div className="relative glass-panel rounded-3xl p-4 sm:p-8 mb-6 overflow-hidden border border-slate-200/80 dark:border-slate-800/80 shadow-xl shadow-slate-200/40 dark:shadow-black/40">
+    <div className="relative glass-panel rounded-3xl p-4 sm:p-8 mb-6 overflow-visible border border-slate-200/80 dark:border-slate-800/80 shadow-xl shadow-slate-200/40 dark:shadow-black/40">
       {/* Dynamic Ambient Background Glow */}
       <div
         className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
@@ -122,22 +122,22 @@ export const ProfileHeader = ({
         }}
       />
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 mb-6">
         <motion.div
           whileHover={{ scale: 1.02 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="relative group cursor-pointer"
+          className="relative group cursor-pointer flex-shrink-0 self-start"
           onClick={isOwner ? (onEditPicture || onEditProfile) : () => setAvatarLightboxOpen(true)}
         >
           <Avatar
             src={avatarSrc}
             alt={displayName}
             size="2xl"
-            className="ring-4 ring-white dark:ring-slate-900 shadow-2xl shadow-brand-500/20"
+            className="!flex-shrink-0 ring-4 ring-white dark:ring-slate-900 shadow-2xl shadow-brand-500/20"
           />
           {isOwner && (
             <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[2px]">
-              <IconCamera className="w-6 h-6" />
+              <IconCamera className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
           )}
         </motion.div>

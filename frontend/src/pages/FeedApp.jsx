@@ -456,8 +456,9 @@ export const FeedApp = () => {
   };
 
   const handleDeletePost = async (postId) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-    setSavedPosts((prev) => prev.filter((p) => p.id !== postId));
+    const matches = (p) => String(p.id || p._id) === String(postId);
+    setPosts((prev) => prev.filter((p) => !matches(p)));
+    setSavedPosts((prev) => prev.filter((p) => !matches(p)));
     updateUserPostsCount?.(-1);
     try {
       await userService.deletePost(postId);

@@ -70,26 +70,47 @@ export const UserProfile = () => {
   }, []);
 
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [postsError, setPostsError] = useState(null);
+  const displayUserRef = useRef(displayUser);
+  const isOwnerRef = useRef(isOwner);
+  displayUserRef.current = displayUser;
+  isOwnerRef.current = isOwner;
 
-  const loadProfileData = useCallback(async (showLoading = false) => {
+  const samePostId = useCallback((item, postId) => {
+    const id = item?.id ?? item?._id;
+    return String(id) === String(postId);
+  }, []);
+
+  const loadProfileData = useCallback(async (showLoading = false, { clearPosts = false } = {}) => {
     if (showLoading) setLoadingProfile(true);
+    if (clearPosts || showLoading) {
+      setPostsLoading(true);
+      setPostsError(null);
+    }
+
     try {
       const userRes = await userService.getUserByUsername(targetUsername);
       const postsRes = await userService.getUserPosts(targetUsername);
       const reelsRes = await userService.getUserReels(targetUsername);
       const creatorsRes = await userService.getSuggestedUsers();
 
+      const ownerFallback = displayUserRef.current;
+
       if (userRes.success && userRes.data) {
         setProfile({
           ...userRes.data,
           isPrivate: Boolean(userRes.data.isPrivate || postsRes.isPrivate || postsRes.isLocked),
         });
-      } else if (isOwner && displayUser) {
-        setProfile(displayUser); 
+      } else if (isOwnerRef.current && ownerFallback) {
+        setProfile(ownerFallback);
       }
 
       if (postsRes.success) {
         setPosts(postsRes.posts || postsRes.data || []);
+        setPostsError(null);
+      } else {
+        setPostsError(postsRes.message || 'Failed to load posts.');
       }
 
       if (reelsRes.success) {
@@ -101,10 +122,12 @@ export const UserProfile = () => {
       }
     } catch (err) {
       console.error('Failed loading profile data:', err);
+      setPostsError(err?.message || 'Failed to load posts.');
     } finally {
+      setPostsLoading(false);
       if (showLoading) setLoadingProfile(false);
     }
-  }, [targetUsername, isOwner, displayUser]);
+  }, [targetUsername]);
 
   const handleProfileUpdated = useCallback((updatedData) => {
     if (updatedData) {
@@ -122,15 +145,19 @@ export const UserProfile = () => {
     }
   }, []);
 
+  // Reload only when viewing a different profile username — never when postsCount/auth object identity changes
   useEffect(() => {
     setProfile(null);
     setPosts([]);
     setReels([]);
-    loadProfileData(true);
+    setPostsLoading(true);
+    setPostsError(null);
+    loadProfileData(true, { clearPosts: true });
   }, [targetUsername, loadProfileData]);
 
   const reloadProfile = useCallback(async () => {
-    await loadProfileData(false);
+    // Background refresh — keep existing posts/header visible
+    await loadProfileData(false, { clearPosts: false });
   }, [loadProfileData]);
 
   const syncProfileFollowState = useCallback(async () => {
@@ -293,7 +320,12 @@ export const UserProfile = () => {
   };
 
   const handleDeletePost = async (postId) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    const previousPosts = posts;
+    const previousReels = reels;
+    const previousCount = profile?.postsCount;
+
+    setPosts((prev) => prev.filter((p) => !samePostId(p, postId)));
+    setReels((prev) => prev.filter((r) => !samePostId(r, postId)));
     setProfile((prev) => {
       if (!prev) return prev;
       const currentCount = typeof prev.postsCount === 'number' ? prev.postsCount : (parseInt(prev.postsCount) || 0);
@@ -308,6 +340,10 @@ export const UserProfile = () => {
       await userService.deletePost(postId);
     } catch (err) {
       console.error('Error deleting post in UserProfile:', err);
+      setPosts(previousPosts);
+      setReels(previousReels);
+      setProfile((prev) => (prev ? { ...prev, postsCount: previousCount ?? prev.postsCount } : prev));
+      updateUserPostsCount?.(1);
     }
   };
 
@@ -393,12 +429,12 @@ export const UserProfile = () => {
 
         {/* Central Profile Workspace */}
         <main className="flex-1 max-w-3xl min-w-0 h-full overflow-y-auto no-scrollbar py-3 sm:py-6 px-2.5 sm:px-4 pb-24 md:pb-12 mx-auto">
-          {loadingProfile && !isOwner && !profile ? (
+          {loadingProfile && !profile && !(isOwner && displayUser) ? (
             <ProfileSkeleton />
           ) : (
             <div className="space-y-4">
               {/* Cover + Profile Header — unified card with overlapping avatar */}
-              <div className="profile-banner-anim glass-panel rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-md dark:shadow-xl">
+              <div className="profile-banner-anim glass-panel rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-md dark:shadow-xl overflow-visible">
                 <div className="rounded-t-3xl overflow-hidden">
                   <CoverBanner
                     coverImage={activeProfile.coverImage}
@@ -421,7 +457,7 @@ export const UserProfile = () => {
                     onEditPicture={() => openEditModalWithSection('photos')}
                     onPostsClick={scrollToPosts}
                     onToggleFollow={handleToggleFollow}
-                    onProfileUpdate={loadProfileData}
+                    onProfileUpdate={() => loadProfileData(false, { clearPosts: false })}
                   />
                 </div>
 
@@ -485,11 +521,14 @@ export const UserProfile = () => {
                         user={displayUser}
                         isGuest={isGuest}
                         isOwner={isOwner}
+                        isLoading={postsLoading}
+                        error={postsError}
                         onRequireAuth={() => openAuthModal('login')}
                         onEditPost={handleEditPost}
                         onDeletePost={handleDeletePost}
                         onPostUpdate={handlePostUpdate}
                         onCreatePost={() => setCreatePostModalOpen(true)}
+                        onRetry={() => loadProfileData(false, { clearPosts: true })}
                       />
                     </motion.div>
                   </AnimatePresence>

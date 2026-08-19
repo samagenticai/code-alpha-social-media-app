@@ -5,7 +5,8 @@ import { PostCard } from '../feed/PostCard';
 import { Button } from '../ui/Button';
 import { Avatar } from '../ui/Avatar';
 import { PostMediaViewer } from '../media/PostMediaViewer';
-import { IconPlay, IconHeart, IconComment, IconSparkles, IconPlus } from '../ui/Icons';
+import { PostSkeleton } from '../ui/Skeleton';
+import { IconPlay, IconHeart, IconComment, IconSparkles } from '../ui/Icons';
 
 export const PostGrid = ({
   posts = [],
@@ -18,7 +19,10 @@ export const PostGrid = ({
   onDeletePost,
   onPostUpdate,
   onCreatePost,
+  onRetry,
   isOwner = false,
+  isLoading = false,
+  error = null,
 }) => {
   const [mediaViewer, setMediaViewer] = useState(null);
   const navigate = useNavigate();
@@ -65,10 +69,29 @@ export const PostGrid = ({
     setMediaViewer({ post: item.post, index: 0, type: 'video' });
   };
 
+  const renderLoadingSkeletons = () => (
+    <div className="space-y-4 sm:space-y-6" aria-busy="true" aria-label="Loading posts">
+      <PostSkeleton variant="media" />
+      <PostSkeleton variant="image" />
+      <PostSkeleton variant="text" />
+    </div>
+  );
+
+  const renderError = (label = 'posts') => (
+    <div className="glass-panel p-8 text-center rounded-3xl border border-slate-200 dark:border-slate-800">
+      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Couldn&apos;t load {label}</h3>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{error || 'Something went wrong. Please try again.'}</p>
+      {onRetry && (
+        <Button variant="secondary" size="sm" onClick={onRetry} className="mt-4">
+          Retry
+        </Button>
+      )}
+    </div>
+  );
+
   if (activeTab === 'posts') {
     return (
       <div className="space-y-4 sm:space-y-6">
-        {/* Owner Quick Create Post Bar without the button */}
         {isOwner && (
           <div
             onClick={onCreatePost}
@@ -76,15 +99,19 @@ export const PostGrid = ({
           >
             <Avatar src={user?.avatar} size="sm" />
             <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium select-none truncate flex-1">
-              What's on your mind? Share a post...
+              What&apos;s on your mind? Share a post...
             </span>
           </div>
         )}
 
-        {posts.length > 0 ? (
+        {isLoading && posts.length === 0 ? (
+          renderLoadingSkeletons()
+        ) : error && posts.length === 0 ? (
+          renderError('posts')
+        ) : posts.length > 0 ? (
           posts.map((post) => (
             <PostCard
-              key={post.id}
+              key={post.id || post._id}
               post={post}
               user={user}
               isGuest={isGuest}
@@ -113,7 +140,17 @@ export const PostGrid = ({
   if (activeTab === 'photos') {
     return (
       <>
-        {photoItems.length > 0 ? (
+        {isLoading && photoItems.length === 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3" aria-busy="true">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div className="w-full h-full animate-pulse bg-slate-200/80 dark:bg-slate-800/80" />
+              </div>
+            ))}
+          </div>
+        ) : error && photoItems.length === 0 ? (
+          renderError('photos')
+        ) : photoItems.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 animate-fadeIn">
             {photoItems.map((item) => (
               <motion.div
@@ -158,7 +195,13 @@ export const PostGrid = ({
     return (
       <>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 animate-fadeIn max-w-md sm:max-w-none">
-        {videoItems.length > 0 ? (
+        {isLoading && videoItems.length === 0 ? (
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="relative rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 aspect-[9/16] animate-pulse" aria-hidden="true" />
+          ))
+        ) : error && videoItems.length === 0 ? (
+          <div className="col-span-full">{renderError('videos')}</div>
+        ) : videoItems.length > 0 ? (
           videoItems.map((item) => (
             <button
               type="button"
@@ -202,10 +245,14 @@ export const PostGrid = ({
   if (activeTab === 'saved') {
     return (
       <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-        {savedPosts.length > 0 ? (
+        {isLoading && savedPosts.length === 0 ? (
+          renderLoadingSkeletons()
+        ) : error && savedPosts.length === 0 ? (
+          renderError('saved posts')
+        ) : savedPosts.length > 0 ? (
           savedPosts.map((post) => (
             <PostCard
-              key={post.id}
+              key={post.id || post._id}
               post={post}
               user={user}
               isGuest={isGuest}

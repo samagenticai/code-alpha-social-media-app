@@ -6,6 +6,8 @@ const sizeMap = {
   md: 'w-9 h-9 sm:w-11 sm:h-11 text-xs sm:text-base',
   lg: 'w-11 h-11 sm:w-14 sm:h-14 text-sm sm:text-lg',
   xl: 'w-16 h-16 sm:w-24 sm:h-24 text-xl sm:text-2xl',
+  // Profile DP — Facebook-style prominence (keeps 1:1 circle via aspect-square)
+  '2xl': 'w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 text-2xl sm:text-3xl',
 };
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80';
@@ -28,22 +30,25 @@ export const Avatar = ({
   const imageSource = (!src || imgError) ? DEFAULT_AVATAR : src;
 
   return (
-    <div 
-      className={`relative inline-flex items-center justify-center flex-shrink-0 cursor-pointer select-none rounded-full ${sizeMap[size] || sizeMap.md} ${className}`}
+    <div
+      className={`relative inline-flex items-center justify-center flex-shrink-0 min-w-0 cursor-pointer select-none rounded-full overflow-visible ${sizeMap[size] || sizeMap.md} ${className}`}
+      style={{ aspectRatio: '1 / 1' }}
       onClick={onClick}
     >
-      <div 
+      <div
         className={`w-full h-full rounded-full transition-transform duration-200 hover:scale-105 flex items-center justify-center aspect-square overflow-hidden ${
-          storyRing 
-            ? 'bg-gradient-to-tr from-brand-cyan via-brand-purple to-brand-pink p-[2.5px] shadow-md shadow-brand-purple/20' 
+          storyRing
+            ? 'bg-gradient-to-tr from-brand-cyan via-brand-purple to-brand-pink p-[2.5px] shadow-md shadow-brand-purple/20'
             : 'p-0'
         }`}
+        style={{ aspectRatio: '1 / 1' }}
       >
         <img
           src={imageSource}
           alt={alt || 'User Avatar'}
           onError={() => setImgError(true)}
-          className="w-full h-full rounded-full object-cover aspect-square border-2 border-white dark:border-[#070a12] bg-slate-200 dark:bg-slate-900 block"
+          className="w-full h-full rounded-full object-cover border-2 border-white dark:border-[#070a12] bg-slate-200 dark:bg-slate-900 block"
+          style={{ aspectRatio: '1 / 1', objectFit: 'cover' }}
           loading="lazy"
         />
       </div>
