@@ -21,17 +21,44 @@ const userReportsRoutes = require('./routes/reports');
 
 const app = express();
 
-const isProduction = process.env.NODE_ENV === 'production';
+/** True on Vercel even if NODE_ENV was mistakenly left as "development". */
+const isVercel = process.env.VERCEL === '1';
+const isProduction = process.env.NODE_ENV === 'production' || isVercel;
 
-/** Build the allowlist from env — never use a wildcard with credentials in production. */
+/**
+ * Normalize an origin/host to `scheme://host[:port]` — no trailing slash, no path.
+ * Accepts: https://app.vercel.app/  |  app.vercel.app  |  https://app.vercel.app/api
+ */
+const normalizeOrigin = (value) => {
+  if (!value || typeof value !== 'string') return null;
+  let raw = value.trim();
+  if (!raw) return null;
+  if (!/^https?:\/\//i.test(raw)) {
+    raw = `https://${raw}`;
+  }
+  try {
+    const url = new URL(raw);
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return null;
+  }
+};
+
+/** Build the allowlist from env — never use origin: "*" with credentials. */
 const buildAllowedOrigins = () => {
-  const fromEnv = [
+  const candidates = [
     process.env.CLIENT_URL,
     process.env.FRONTEND_URL,
     ...String(process.env.ALLOWED_ORIGINS || '')
       .split(',')
       .map((s) => s.trim()),
-  ].filter(Boolean);
+    // Injected by Vercel for the current deployment / production domain
+    process.env.VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ];
+
+  const fromEnv = candidates.map(normalizeOrigin).filter(Boolean);
 
   if (!isProduction) {
     fromEnv.push(
@@ -50,29 +77,69 @@ const allowedOrigins = buildAllowedOrigins();
 const allowVercelPreviews =
   String(process.env.ALLOW_VERCEL_PREVIEWS || '').toLowerCase() === 'true';
 
+/**
+ * Prefix used to scope preview hosts to this project only
+ * (not every *.vercel.app site on the internet).
+ */
+const vercelProjectPrefix = (() => {
+  const prod = normalizeOrigin(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+      process.env.CLIENT_URL ||
+      process.env.FRONTEND_URL ||
+      process.env.VERCEL_URL
+  );
+  if (!prod) return null;
+  try {
+    return new URL(prod).hostname.replace(/\.vercel\.app$/i, '');
+  } catch {
+    return null;
+  }
+})();
+
 const isDevLanOrigin = (origin) =>
   !isProduction &&
   /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(
     origin
   );
 
+const isProjectVercelPreview = (hostname) => {
+  if (!hostname.endsWith('.vercel.app')) return false;
+  if (!vercelProjectPrefix) return false;
+  // Exact production host or deployment/preview variants for this project
+  return (
+    hostname === `${vercelProjectPrefix}.vercel.app` ||
+    hostname.startsWith(`${vercelProjectPrefix}-`)
+  );
+};
+
 const isAllowedOrigin = (origin) => {
-  if (allowedOrigins.includes(origin)) return true;
-  if (isDevLanOrigin(origin)) return true;
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return false;
+  if (allowedOrigins.includes(normalized)) return true;
+  if (isDevLanOrigin(normalized)) return true;
+
   if (allowVercelPreviews) {
     try {
-      const { hostname } = new URL(origin);
-      if (hostname.endsWith('.vercel.app')) return true;
+      return isProjectVercelPreview(new URL(normalized).hostname);
     } catch {
-      /* ignore */
+      return false;
     }
   }
   return false;
 };
 
+if (isVercel || isProduction) {
+  console.log(
+    `CORS allowlist (${allowedOrigins.length}): ${
+      allowedOrigins.join(', ') || '(empty — set CLIENT_URL on Vercel)'
+    }`
+  );
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Same-origin tooling / server-to-server / some WebViews omit Origin
       if (!origin) return callback(null, true);
       if (isAllowedOrigin(origin)) {
         return callback(null, true);
@@ -106,6 +173,7 @@ app.get('/api/health', async (req, res) => {
     message: `${brand.name} API is running.`,
     database: dbConnected ? 'connected' : 'disconnected',
     environment: process.env.NODE_ENV || 'development',
+    vercel: isVercel,
   });
 });
 
