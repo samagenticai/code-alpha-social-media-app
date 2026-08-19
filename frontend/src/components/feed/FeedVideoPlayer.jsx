@@ -28,9 +28,15 @@ export const resolvePostVideoUrl = (post) => {
   const raw = candidates.find(isVideoMediaUrl) || '';
   if (!raw) return '';
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-  if (isMobile && raw.includes('cloudinary.com') && raw.includes('/upload/') && !raw.includes('/upload/q_auto')) {
-    return raw.replace('/upload/', '/upload/q_auto:good,f_auto,w_720,c_limit/');
+  // Normalize Cloudinary delivery for reliable HTML5 video frames (not audio-only blank)
+  if (raw.includes('cloudinary.com') && raw.includes('/upload/')) {
+    if (/\/upload\/[^/]*f_auto/.test(raw)) {
+      return raw.replace(/f_auto/g, 'f_mp4');
+    }
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    if (isMobile && !/\/upload\/[^/]*(?:f_mp4|q_auto)/.test(raw)) {
+      return raw.replace('/upload/', '/upload/f_mp4,q_auto:good,w_720,c_limit/');
+    }
   }
   return raw;
 };
@@ -181,7 +187,7 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
         if (e.key === ' ' || e.key === 'Enter') handleTogglePlay(e);
       }}
     >
-      {/* Skeleton / poster — always fills container */}
+      {/* Poster stays under the video until the first decoded frame is confirmed */}
       {!isReady && (
         <div className="post-video-skeleton absolute inset-0 z-[1]">
           {thumbUrl ? (
@@ -209,12 +215,19 @@ export const FeedVideoPlayer = React.memo(function FeedVideoPlayer({ postId, vid
           playsInline
           muted={isMuted}
           disablePictureInPicture
-          className={`post-video-element absolute inset-0 w-full h-full z-[2] transition-opacity duration-200 ${
-            isReady ? 'opacity-100' : 'opacity-0'
-          }`}
+          className="post-video-element absolute inset-0 w-full h-full z-[2]"
+          style={{ opacity: 1, visibility: 'visible' }}
+          onLoadedMetadata={() => { setIsReady(true); setIsBuffering(false); }}
           onLoadedData={() => { setIsReady(true); setIsBuffering(false); }}
           onCanPlay={() => { setIsReady(true); setIsBuffering(false); }}
           onPlaying={() => { setIsPlaying(true); setIsBuffering(false); setIsReady(true); }}
+          onTimeUpdate={() => {
+            const v = videoRef.current;
+            if (v && v.currentTime > 0) {
+              setIsReady(true);
+              setIsBuffering(false);
+            }
+          }}
           onPause={() => setIsPlaying(false)}
           onWaiting={() => setIsBuffering(true)}
           onError={() => { setHasError(true); setIsBuffering(false); }}

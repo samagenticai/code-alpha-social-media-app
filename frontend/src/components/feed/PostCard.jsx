@@ -396,11 +396,20 @@ export const PostCard = React.memo(({ post, user, isGuest, onRequireAuth, onEdit
                   <img
                     src={img}
                     alt={`Post media ${idx}`}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
-                      loadedImages.has(idx) ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ opacity: 1, visibility: 'visible' }}
                     loading="lazy"
                     decoding="async"
+                    ref={(el) => {
+                      if (el && el.complete && el.naturalWidth > 0 && !loadedImages.has(idx)) {
+                        setLoadedImages((prev) => {
+                          if (prev.has(idx)) return prev;
+                          const next = new Set(prev);
+                          next.add(idx);
+                          return next;
+                        });
+                      }
+                    }}
                     onLoad={() => setLoadedImages((prev) => new Set(prev).add(idx))}
                     onError={() => setBrokenImages((prev) => new Set(prev).add(idx))}
                   />

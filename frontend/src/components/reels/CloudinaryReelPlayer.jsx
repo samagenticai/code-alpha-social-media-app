@@ -205,9 +205,8 @@ export const CloudinaryReelPlayer = ({
       <video
         ref={videoRef}
         poster={thumbnailUrl || undefined}
-        className={`absolute inset-0 w-full h-full reel-video-layer bg-transparent z-10 max-w-full max-h-full transition-opacity duration-200 ${
-          isReady ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="absolute inset-0 w-full h-full reel-video-layer bg-transparent z-10 max-w-full max-h-full"
+        style={{ opacity: 1, visibility: 'visible' }}
         loop
         playsInline
         webkit-playsinline="true"

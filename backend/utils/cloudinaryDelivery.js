@@ -23,8 +23,12 @@ const getOptimizedVideoUrl = (videoUrl) => {
   if (!videoUrl || !videoUrl.includes('cloudinary.com') || !videoUrl.includes('/upload/')) {
     return videoUrl || '';
   }
-  if (/\/upload\/[^/]*(?:f_auto|q_auto)/.test(videoUrl)) return videoUrl;
-  return videoUrl.replace('/upload/', '/upload/f_auto,q_auto:good,w_1080,c_limit/');
+  // Prefer progressive MP4 for HTML5 <video> (f_auto can yield blank frames + audio)
+  if (/\/upload\/[^/]*f_auto/.test(videoUrl)) {
+    return videoUrl.replace(/f_auto/g, 'f_mp4');
+  }
+  if (/\/upload\/[^/]*(?:f_mp4|q_auto)/.test(videoUrl)) return videoUrl;
+  return videoUrl.replace('/upload/', '/upload/f_mp4,q_auto:good,w_1080,c_limit/');
 };
 
 const resolveReelThumbnail = (reelObj) => {

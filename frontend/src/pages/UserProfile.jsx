@@ -196,17 +196,22 @@ export const UserProfile = () => {
     isAuthenticated && !isGuest && !loadingProfile && Boolean(profile)
   );
 
-  // GSAP Page Entrance Reveal Animation
+  // Soft entrance only — never leave content stuck at opacity:0 if GSAP is interrupted
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.gsap) {
-      const gsap = window.gsap;
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    if (typeof window === 'undefined' || !window.gsap) return undefined;
+    const gsap = window.gsap;
+    const targets = ['.profile-banner-anim', '.profile-header-anim', '.profile-stats-anim', '.profile-content-anim'];
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      tl.fromTo('.profile-banner-anim', { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6 })
-        .fromTo('.profile-header-anim', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.3')
-        .fromTo('.profile-stats-anim', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.2')
-        .fromTo('.profile-content-anim', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.2');
-    }
+    tl.fromTo('.profile-banner-anim', { opacity: 0.01, y: -12 }, { opacity: 1, y: 0, duration: 0.45 })
+      .fromTo('.profile-header-anim', { opacity: 0.01, y: 12 }, { opacity: 1, y: 0, duration: 0.4 }, '-=0.25')
+      .fromTo('.profile-stats-anim', { opacity: 0.01, y: 12 }, { opacity: 1, y: 0, duration: 0.35 }, '-=0.2')
+      .fromTo('.profile-content-anim', { opacity: 0.01, y: 12 }, { opacity: 1, y: 0, duration: 0.35 }, '-=0.2');
+
+    return () => {
+      tl.kill();
+      gsap.set(targets.join(', '), { clearProps: 'opacity,transform' });
+    };
   }, [targetUsername]);
 
   const handleLogout = async () => {

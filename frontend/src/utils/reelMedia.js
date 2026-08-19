@@ -19,14 +19,23 @@ export const getCloudinaryThumbnailUrl = (videoUrl) => {
     .replace(/\.(mp4|mov|webm|mkv)$/i, '.jpg');
 };
 
-/** Mobile-optimized Cloudinary delivery — auto format/quality, width cap */
+/**
+ * HTML5-safe Cloudinary delivery.
+ * Prefer f_mp4 (not f_auto) so <video src> always gets a progressive MP4
+ * instead of browser-negotiated formats that can play audio with blank frames.
+ */
 export const getOptimizedCloudinaryVideoUrl = (videoUrl, { mobile = false } = {}) => {
   if (!videoUrl || !videoUrl.includes('cloudinary.com') || !videoUrl.includes('/upload/')) {
     return videoUrl || '';
   }
-  if (/\/upload\/[^/]*(?:f_auto|q_auto)/.test(videoUrl)) return videoUrl;
 
-  const transforms = mobile ? 'f_auto,q_auto:eco,w_720,c_limit' : 'f_auto,q_auto,w_1080,c_limit';
+  // Normalize any existing f_auto delivery to progressive MP4 for <video>
+  if (/\/upload\/[^/]*f_auto/.test(videoUrl)) {
+    return videoUrl.replace(/f_auto/g, 'f_mp4');
+  }
+  if (/\/upload\/[^/]*(?:f_mp4|q_auto)/.test(videoUrl)) return videoUrl;
+
+  const transforms = mobile ? 'f_mp4,q_auto:eco,w_720,c_limit' : 'f_mp4,q_auto:good,w_1080,c_limit';
   return videoUrl.replace('/upload/', `/upload/${transforms}/`);
 };
 
