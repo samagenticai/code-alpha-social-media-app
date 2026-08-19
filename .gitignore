@@ -46,6 +46,3 @@ tmp/
 temp/
 coverage/
 .cache/
-
-.vercel
-.env*
