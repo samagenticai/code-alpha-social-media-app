@@ -10,7 +10,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 const fieldClass =
-  'w-full h-12 pl-11 pr-4 text-base sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 transition-all';
+  'w-full h-11 sm:h-12 pl-11 pr-4 text-base sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 transition-all';
 
 export const AuthForm = ({
   initialMode = 'login',
@@ -123,22 +123,22 @@ export const AuthForm = ({
 
   return (
     <div className="w-full">
-      <div className="mb-5 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+      <div className="mb-3 sm:mb-6">
+        <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           {mode === 'login' ? 'Welcome back' : `Join ${BRAND.name}`}
         </h1>
-        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+        <p className="hidden sm:block mt-1.5 text-sm text-slate-500 dark:text-slate-400">
           {mode === 'login'
             ? 'Sign in to continue to your account.'
             : 'Create an account to start sharing with the community.'}
         </p>
       </div>
 
-      <div className="flex p-1 mb-5 bg-slate-100 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800">
+      <div className="flex p-1 mb-3 sm:mb-5 bg-slate-100 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800">
         <button
           type="button"
           onClick={() => switchMode('login')}
-          className={`flex-1 h-10 text-sm font-semibold rounded-lg transition-all ${
+          className={`flex-1 h-9 sm:h-10 text-sm font-semibold rounded-lg transition-all ${
             mode === 'login'
               ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -149,7 +149,7 @@ export const AuthForm = ({
         <button
           type="button"
           onClick={() => switchMode('register')}
-          className={`flex-1 h-10 text-sm font-semibold rounded-lg transition-all ${
+          className={`flex-1 h-9 sm:h-10 text-sm font-semibold rounded-lg transition-all ${
             mode === 'register'
               ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -179,7 +179,7 @@ export const AuthForm = ({
         </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3.5" noValidate>
         {mode === 'register' && (
           <>
             <Field
@@ -231,7 +231,7 @@ export const AuthForm = ({
         )}
 
         <div>
-          <label htmlFor="password" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+          <label htmlFor="password" className="block text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 sm:mb-1.5">
             Password
           </label>
           <div className="relative">
@@ -262,7 +262,7 @@ export const AuthForm = ({
 
         {mode === 'register' && (
           <div>
-            <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+            <label htmlFor="confirmPassword" className="block text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 sm:mb-1.5">
               Confirm password
             </label>
             <div className="relative">
@@ -296,7 +296,7 @@ export const AuthForm = ({
 
         {mode === 'login' && (
           <div className="flex items-center justify-between gap-3 pt-0.5">
-            <label className="flex items-center gap-2 cursor-pointer select-none min-h-10">
+            <label className="flex items-center gap-2 cursor-pointer select-none min-h-8 sm:min-h-10">
               <input
                 type="checkbox"
                 checked={rememberMe}
@@ -310,7 +310,7 @@ export const AuthForm = ({
               onClick={() =>
                 setForgotHint('Password reset is not enabled yet. Use Settings → Help & Support to contact us.')
               }
-              className="text-sm font-semibold text-brand-600 dark:text-cyan-400 hover:underline min-h-10"
+              className="text-sm font-semibold text-brand-600 dark:text-cyan-400 hover:underline min-h-8 sm:min-h-10"
             >
               Forgot password?
             </button>
@@ -323,22 +323,22 @@ export const AuthForm = ({
           </p>
         )}
 
-        <Button type="submit" variant="primary" fullWidth disabled={isSubmitting} className="!h-12 !text-sm !font-bold mt-1">
+        <Button type="submit" variant="primary" fullWidth disabled={isSubmitting} className="!h-11 sm:!h-12 !text-sm !font-bold mt-0.5 sm:mt-1">
           {isSubmitting ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
         </Button>
       </form>
 
-      {showGuestSkip && (
+      {showGuestSkip && mode === 'login' && (
         <button
           type="button"
           onClick={onGuestSkip}
-          className="mt-3 w-full h-11 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+          className="mt-2 sm:mt-3 w-full h-9 sm:h-11 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
           Continue as guest
         </button>
       )}
 
-      <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+      <p className="hidden sm:block mt-3 sm:mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
         {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
         <button
           type="button"
@@ -364,7 +364,7 @@ const Field = ({
   type = 'text',
 }) => (
   <div>
-    <label htmlFor={name} className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+    <label htmlFor={name} className="block text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 sm:mb-1.5">
       {label}
     </label>
     <div className="relative">
