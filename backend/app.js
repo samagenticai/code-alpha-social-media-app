@@ -168,10 +168,13 @@ app.get('/api/health', async (req, res) => {
     }
   }
 
+  const errorDetails = !dbConnected && connectDB.getDbErrorDetails ? connectDB.getDbErrorDetails() : null;
+
   res.json({
     success: true,
     message: `${brand.name} API is running.`,
     database: dbConnected ? 'connected' : 'disconnected',
+    ...(errorDetails ? { dbDiagnostic: errorDetails } : {}),
     environment: process.env.NODE_ENV || 'development',
     vercel: isVercel,
   });
@@ -183,18 +186,23 @@ app.use(async (req, res, next) => {
   try {
     const ok = await connectDB();
     if (!ok) {
+      const errorDetails = connectDB.getDbErrorDetails ? connectDB.getDbErrorDetails() : null;
       return res.status(503).json({
         success: false,
-        message:
-          'Database is not connected. Check MONGODB_URI and MongoDB Atlas Network Access.',
+        message: errorDetails?.action
+          ? `Database is not connected: ${errorDetails.action}`
+          : 'Database is not connected. Check MONGODB_URI and MongoDB Atlas Network Access.',
+        details: errorDetails || undefined,
       });
     }
     return next();
   } catch (err) {
     console.error('DB middleware error:', err.message);
+    const errorDetails = connectDB.getDbErrorDetails ? connectDB.getDbErrorDetails() : null;
     return res.status(503).json({
       success: false,
-      message: 'Database connection failed.',
+      message: errorDetails?.action || 'Database connection failed.',
+      error: err.message,
     });
   }
 });
