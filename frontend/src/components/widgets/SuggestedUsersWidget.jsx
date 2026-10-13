@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Avatar } from '../ui/Avatar';
 import { FollowButton } from '../profile/FollowButton';
 import { IconUsers, IconRefresh } from '../ui/Icons';
@@ -86,7 +87,7 @@ export const SuggestedUsersWidget = ({ isGuest, onRequireAuth }) => {
   const handleUserClick = (username) => {
     if (username) {
       const clean = username.replace('@', '');
-      navigate(`/profile/${clean}`);
+      navigateToUserProfile(navigate, clean);
     }
   };
 

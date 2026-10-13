@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { motion } from 'framer-motion';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
@@ -156,7 +157,7 @@ export const FollowRequestsView = ({ onCountChange }) => {
               >
                 <div
                   className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
-                  onClick={() => navigate(`/profile/${username.toLowerCase()}`)}
+                  onClick={() => navigateToUserProfile(navigate, username.toLowerCase())}
                 >
                   <Avatar src={user.avatar || user.profileImage} alt={user.fullName} size="md" />
                   <div className="min-w-0">

@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
  * Protects normal user routes (/feed, /profile).
  * Admins are always redirected to the admin dashboard.
  */
-export const UserRoute = ({ children }) => {
+export const UserRoute = ({ children, requireAuthOnly = false }) => {
   const { isAuthenticated, isLoading, isGuest, user } = useAuth();
 
   if (isLoading) {
@@ -21,6 +21,10 @@ export const UserRoute = ({ children }) => {
     return <Navigate to="/admin" replace />;
   }
 
+  if (requireAuthOnly && !isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
   if (!isAuthenticated && !isGuest) {
     return <Navigate to="/" replace />;
   }
@@ -29,3 +33,4 @@ export const UserRoute = ({ children }) => {
 };
 
 export default UserRoute;
+

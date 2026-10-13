@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { motion } from 'framer-motion';
 import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/Badge';
@@ -13,7 +14,7 @@ export const SuggestedConnections = ({ creators = [], onRequireAuth }) => {
   const handleUserClick = (creator) => {
     const uname = creator.username || (creator.handle ? creator.handle.replace('@', '') : '') || creator.id;
     if (uname) {
-      navigate(`/profile/${String(uname).toLowerCase()}`);
+      navigateToUserProfile(navigate, String(uname).toLowerCase());
     }
   };
 

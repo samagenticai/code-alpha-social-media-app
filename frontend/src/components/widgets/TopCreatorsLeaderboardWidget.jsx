@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/Badge';
 import { userService } from '../../services/userService';
@@ -76,7 +77,7 @@ export const TopCreatorsLeaderboardWidget = () => {
 
   const handleUserClick = (username) => {
     if (username) {
-      navigate(`/profile/${username.toLowerCase()}`);
+      navigateToUserProfile(navigate, username.toLowerCase());
     }
   };
 

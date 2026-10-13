@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { verifyInAppProfileAccess, navigateToUserProfile } from '../utils/navigation';
 import { TopNavigation } from '../components/navigation/TopNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { RightSidebar } from '../components/sidebar/RightSidebar';
@@ -27,6 +28,7 @@ import { usePolling } from '../hooks/usePolling';
 export const UserProfile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     displayUser,
     isAuthenticated,
@@ -62,6 +64,18 @@ export const UserProfile = () => {
   const targetUsername = username ? username.replace('@', '').toLowerCase() : (myUsername || 'alexrivera');
   const isOwner = Boolean(isAuthenticated && myUsername && targetUsername === myUsername);
 
+  // Direct address-bar URL navigation is strictly blocked.
+  // Profile can ONLY be accessed via authorized in-app clicks (fromApp verified).
+  // Changing or typing the URL in the browser address bar will NOT open any second page and redirects to /feed.
+  const isDirectUrlBlocked = !verifyInAppProfileAccess(targetUsername, location.state);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (isDirectUrlBlocked) {
+      navigate('/feed', { replace: true });
+    }
+  }, [authLoading, isDirectUrlBlocked, navigate]);
+
   const scrollToPosts = useCallback(() => {
     setActiveTab('posts');
     setTimeout(() => {
@@ -83,6 +97,7 @@ export const UserProfile = () => {
   }, []);
 
   const loadProfileData = useCallback(async (showLoading = false, { clearPosts = false } = {}) => {
+    if (isDirectUrlBlocked) return;
     if (showLoading) setLoadingProfile(true);
     if (clearPosts || showLoading) {
       setPostsLoading(true);
@@ -222,7 +237,7 @@ export const UserProfile = () => {
   const handleNavTabChange = (tab) => {
     if (tab === 'profile') {
       const handleClean = displayUser?.handle ? displayUser.handle.replace('@', '').toLowerCase() : 'alexrivera';
-      navigate(`/profile/${handleClean}`);
+      navigateToUserProfile(navigate, handleClean);
       return;
     }
     navigate(`/feed?tab=${tab}`);
@@ -357,7 +372,7 @@ export const UserProfile = () => {
     setEditModalOpen(true);
   };
 
-  if (authLoading) {
+  if (authLoading || isDirectUrlBlocked) {
     return (
       <div className="app-viewport flex items-center justify-center bg-[#f8fafc] dark:bg-[#070a12] transition-colors duration-300">
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
@@ -412,7 +427,7 @@ export const UserProfile = () => {
           }}
           onOpenNotifications={() => navigate('/feed?tab=notifications')}
           onOpenMessages={() => navigate('/feed?tab=messages')}
-          onOpenProfile={() => navigate(`/profile/${myUsername}`)}
+          onOpenProfile={() => navigateToUserProfile(navigate, myUsername)}
           onOpenSettings={() => navigate('/feed?tab=settings')}
           onLogout={handleLogout}
           user={displayUser}

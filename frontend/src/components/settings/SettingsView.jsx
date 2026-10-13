@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconSettings,
@@ -850,7 +851,7 @@ export const SettingsView = ({ user: propsUser, isGuest, onLogout, openReportId 
                 <div
                   onClick={() => {
                     const handleClean = user?.username || (user?.handle ? user.handle.replace('@', '') : '') || 'user';
-                    navigate(`/profile/${handleClean.toLowerCase()}`);
+                    navigateToUserProfile(navigate, handleClean.toLowerCase());
                   }}
                   className="flex items-center gap-3 min-w-0 cursor-pointer group"
                 >
@@ -870,7 +871,7 @@ export const SettingsView = ({ user: propsUser, isGuest, onLogout, openReportId 
                   size="sm"
                   onClick={() => {
                     const handleClean = user?.username || (user?.handle ? user.handle.replace('@', '') : '') || 'user';
-                    navigate(`/profile/${handleClean.toLowerCase()}`);
+                    navigateToUserProfile(navigate, handleClean.toLowerCase());
                   }}
                   className="!px-4 font-bold flex-shrink-0"
                 >

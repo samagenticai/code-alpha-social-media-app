@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Modal } from '../ui/Modal';
 import { Avatar } from '../ui/Avatar';
 import { FollowButton } from './FollowButton';
@@ -58,7 +59,7 @@ export const ProfileUsersModal = ({
     const uname = user.username || user.handle?.replace('@', '');
     if (uname) {
       onClose();
-      navigate(`/profile/${uname}`);
+      navigateToUserProfile(navigate, uname);
     }
   };
 

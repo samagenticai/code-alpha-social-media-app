@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Avatar } from '../ui/Avatar';
 import { IconHeart, IconSend, IconTrash, IconSparkles } from '../ui/Icons';
 import {
@@ -105,7 +106,7 @@ export const PostCommentsSection = ({
       commentUser?.id ||
       commentUser?._id;
     if (handleClean) {
-      navigate(`/profile/${String(handleClean).toLowerCase()}`);
+      navigateToUserProfile(navigate, String(handleClean).toLowerCase());
     }
   };
 

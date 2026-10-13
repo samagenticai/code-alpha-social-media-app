@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { navigateToUserProfile } from '../utils/navigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { TopNavigation } from '../components/navigation/TopNavigation';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
@@ -521,7 +522,7 @@ export const FeedApp = () => {
     }
     if (tab === 'profile') {
       const handleClean = user?.handle ? user.handle.replace('@', '').toLowerCase() : 'alexrivera';
-      navigate(`/profile/${handleClean}`);
+      navigateToUserProfile(navigate, handleClean);
       return;
     }
     setActiveTab(tab);
@@ -676,7 +677,7 @@ export const FeedApp = () => {
         break;
       case 'edit_profile': {
         const handleClean = user?.handle ? user.handle.replace('@', '') : 'user';
-        navigate(`/profile/${handleClean}`);
+        navigateToUserProfile(navigate, handleClean);
         break;
       }
       case 'saved_posts':
@@ -1026,7 +1027,7 @@ export const FeedApp = () => {
                           className="glass-panel p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 hover:border-brand-500/40 transition-all"
                         >
                           <div
-                            onClick={() => navigate(`/profile/${(searchedUser.username || '').replace('@', '').toLowerCase()}`)}
+                            onClick={() => navigateToUserProfile(navigate, (searchedUser.username || searchedUser.handle || '').replace('@', '').toLowerCase())}
                             className="flex items-center gap-3 cursor-pointer min-w-0 flex-1"
                           >
                             <Avatar src={searchedUser.profileImage || searchedUser.avatar} alt={searchedUser.fullName} size="md" />
@@ -1078,7 +1079,7 @@ export const FeedApp = () => {
                           className="glass-panel p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 hover:border-brand-500/40 transition-all"
                         >
                           <div
-                            onClick={() => navigate(`/profile/${(sugUser.username || '').replace('@', '').toLowerCase()}`)}
+                            onClick={() => navigateToUserProfile(navigate, (sugUser.username || sugUser.handle || '').replace('@', '').toLowerCase())}
                             className="flex items-center gap-3 cursor-pointer min-w-0 flex-1"
                           >
                             <Avatar src={sugUser.profileImage || sugUser.avatar} alt={sugUser.fullName} size="md" />

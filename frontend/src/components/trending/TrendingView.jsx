@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { motion } from 'framer-motion';
 import { PostCard } from '../feed/PostCard';
 import { PostSkeleton } from '../ui/Skeleton';
@@ -167,7 +168,7 @@ const TrendingCreatorCard = ({ creator, isGuest, onRequireAuth, onFollowChange }
     <div className="glass-panel p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-3 hover:border-brand-500/30 transition-all">
       <div
         className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
-        onClick={() => navigate(`/profile/${username.toLowerCase()}`)}
+        onClick={() => navigateToUserProfile(navigate, username.toLowerCase())}
       >
         <Avatar src={creator.avatar || creator.profileImage} alt={creator.fullName} size="md" />
         <div className="min-w-0">

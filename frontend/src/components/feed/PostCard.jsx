@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -137,7 +138,7 @@ export const PostCard = React.memo(({ post, user, isGuest, onRequireAuth, onEdit
     const targetUser = post.user || {};
     const handleClean = targetUser.username || (targetUser.handle ? targetUser.handle.replace('@', '') : '') || targetUser.id || targetUser._id;
     if (handleClean) {
-      navigate(`/profile/${String(handleClean).toLowerCase()}`);
+      navigateToUserProfile(navigate, String(handleClean).toLowerCase());
     }
   };
 

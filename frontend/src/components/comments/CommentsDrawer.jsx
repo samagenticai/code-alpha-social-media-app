@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Avatar } from '../ui/Avatar';
 import { IconClose, IconHeart, IconSend, IconTrash, IconComment, IconSparkles } from '../ui/Icons';
 import {
@@ -106,7 +107,7 @@ export const CommentsDrawer = ({
       commentUser?._id;
     if (handleClean) {
       onClose?.();
-      navigate(`/profile/${String(handleClean).toLowerCase()}`);
+      navigateToUserProfile(navigate, String(handleClean).toLowerCase());
     }
   };
 

@@ -20,8 +20,8 @@ export default function App() {
             <Routes>
               <Route path="/" element={<AuthScreen />} />
               <Route path="/feed" element={<UserRoute><FeedApp /></UserRoute>} />
-              <Route path="/profile" element={<UserRoute><UserProfile /></UserRoute>} />
-              <Route path="/profile/:username" element={<UserRoute><UserProfile /></UserRoute>} />
+              <Route path="/profile" element={<Navigate to="/feed" replace />} />
+              <Route path="/profile/:username" element={<UserRoute requireAuthOnly><UserProfile /></UserRoute>} />
               <Route path="/admin/*" element={<AdminApp />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

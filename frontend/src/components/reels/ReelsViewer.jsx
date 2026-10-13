@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Avatar } from '../ui/Avatar';
 import { FollowButton } from '../profile/FollowButton';
 import { CloudinaryReelPlayer } from './CloudinaryReelPlayer';
@@ -165,7 +166,7 @@ const ReelSlide = React.memo(({
 
   const goToProfile = () => {
     const un = author.username || author.handle?.replace('@', '');
-    if (un) navigate(`/profile/${un}`);
+    if (un) navigateToUserProfile(navigate, un);
   };
 
   const hasMedia = hasReelVideo(reel) || Boolean(videoUrl);

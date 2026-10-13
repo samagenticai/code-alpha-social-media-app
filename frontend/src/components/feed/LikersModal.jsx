@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Modal } from '../ui/Modal';
 import { Avatar } from '../ui/Avatar';
 
@@ -10,7 +11,7 @@ export const LikersModal = ({ isOpen, onClose, likers, loading }) => {
     const username = liker.username || liker.handle?.replace('@', '');
     if (username) {
       onClose();
-      navigate(`/profile/${username}`);
+      navigateToUserProfile(navigate, username);
     }
   };
 

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { navigateToUserProfile } from '../../utils/navigation';
 import { Avatar } from '../ui/Avatar';
 import {
   IconPlus,
@@ -41,6 +43,7 @@ export const RightSidebar = ({
   currentUser,
   onTabChange,
 }) => {
+  const navigate = useNavigate();
   const [savedCount, setSavedCount] = useState(0);
   const [recentPosts, setRecentPosts] = useState([]);
 
@@ -81,7 +84,7 @@ export const RightSidebar = ({
     }
     const un = currentUser?.username || currentUser?.handle?.replace('@', '') || 'user';
     onTabChange?.('profile');
-    window.history.pushState({}, '', `/profile/${un}`);
+    navigateToUserProfile(navigate, un);
   };
 
   const displayName = currentUser?.name || currentUser?.fullName || 'Your Profile';
