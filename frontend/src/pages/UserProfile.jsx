@@ -448,7 +448,7 @@ export const UserProfile = () => {
         />
 
         {/* Central Profile Workspace */}
-        <main className="flex-1 max-w-3xl min-w-0 h-full overflow-y-auto no-scrollbar py-3 sm:py-6 px-2.5 sm:px-4 pb-24 md:pb-12 mx-auto">
+        <main className="flex-1 max-w-3xl min-w-0 h-full overflow-y-auto overflow-x-hidden no-scrollbar py-3 sm:py-6 px-2.5 sm:px-4 pb-24 md:pb-12 mx-auto">
           {loadingProfile && !profile && !(isOwner && displayUser) ? (
             <ProfileSkeleton />
           ) : (

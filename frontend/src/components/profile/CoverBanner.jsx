@@ -159,7 +159,7 @@ export const CoverBanner = ({
     <>
       <div
         onClick={() => setLightboxOpen(true)}
-        className={`relative w-full h-28 sm:h-36 md:h-40 overflow-hidden select-none cursor-pointer group ${
+        className={`relative w-full h-36 sm:h-48 md:h-56 overflow-hidden select-none cursor-pointer group ${
           embedded ? 'rounded-none border-0 shadow-none' : 'rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-md dark:shadow-xl'
         } transition-colors`}
         title="Click to view cover photo"
