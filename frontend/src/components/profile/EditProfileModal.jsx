@@ -42,6 +42,7 @@ export const EditProfileModal = ({
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
   const bioRef = useRef(null);
+  const wasOpenRef = useRef(false);
 
   const autoResizeBio = () => {
     const el = bioRef.current;
@@ -51,7 +52,12 @@ export const EditProfileModal = ({
   };
 
   useEffect(() => {
-    if (userProfile && isOpen) {
+    if (!isOpen) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (userProfile && !wasOpenRef.current) {
+      wasOpenRef.current = true;
       const cleanUsername = (userProfile.username || userProfile.handle || '').replace('@', '').toLowerCase();
       setForm({
         name: userProfile.name || userProfile.fullName || '',
