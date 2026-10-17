@@ -271,6 +271,11 @@ export const EditProfileInfoModal = ({
                   <option value="">Select Marital Status</option>
                   <option value="Unmarried">Unmarried</option>
                   <option value="Married">Married</option>
+                  <option value="Separated">Separated</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="It's complicated">It's complicated</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
                 </select>
               </div>
 

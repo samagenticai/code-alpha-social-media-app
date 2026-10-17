@@ -155,6 +155,11 @@ export const ProfileInfoSection = ({
       options: [
         { label: 'Unmarried', value: 'Unmarried' },
         { label: 'Married', value: 'Married' },
+        { label: 'Separated', value: 'Separated' },
+        { label: 'Divorced', value: 'Divorced' },
+        { label: 'Widowed', value: 'Widowed' },
+        { label: "It's complicated", value: "It's complicated" },
+        { label: 'Prefer not to say', value: 'Prefer not to say' },
       ],
     },
     {
