@@ -69,15 +69,21 @@ export const PostCard = React.memo(({ post, user, isGuest, onRequireAuth, onEdit
     setLoadedImages(new Set());
   }, [postId]);
 
+  const postImages = useMemo(() => {
+    if (Array.isArray(post.images) && post.images.length > 0) return post.images;
+    if (post.imageUrl) return [post.imageUrl];
+    return [];
+  }, [post.images, post.imageUrl]);
+
   const feedVideoUrl = useMemo(() => {
-    if (post.images?.length && !post.videoUrl && !post.video?.url) return '';
+    if (postImages.length && !post.videoUrl && !post.video?.url) return '';
     return resolvePostVideoUrl(post);
   }, [
     post.videoUrl,
     post.video?.url,
     post.thumbnailUrl,
     post.media,
-    post.images,
+    postImages,
   ]);
   const feedVideoThumb = useMemo(
     () => resolvePostVideoThumb(post, feedVideoUrl),
@@ -375,50 +381,98 @@ export const PostCard = React.memo(({ post, user, isGuest, onRequireAuth, onEdit
       </div>
 
       {/* Post Media Images */}
-      {post.images && post.images.length > 0 && (
-        <div className={`grid gap-1.5 sm:gap-2 mb-3 sm:mb-4 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 ${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'
-          }`}>
-          {post.images.map((img, idx) => (
+      {postImages.length > 0 && (
+        postImages.length === 1 ? (
+          <div
+            className={`relative mb-3 sm:mb-4 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-slate-900/5 dark:bg-slate-950/60 flex items-center justify-center max-h-[380px] sm:max-h-[420px] transition-all ${
+              !loadedImages.has(0) && !brokenImages.has(0) ? 'min-h-[180px] sm:min-h-[220px]' : ''
+            }`}
+          >
+            {/* Ambient soft glow blur behind image for seamless letterbox aesthetic */}
             <div
-              key={`${postId}-img-${idx}`}
-              className={`post-image-container ${
-                post.images.length > 1 ? 'post-image-container--grid' : 'post-image-container--single'
-              }`}
+              className="absolute inset-0 bg-cover bg-center blur-2xl opacity-20 dark:opacity-30 scale-125 pointer-events-none"
+              style={{ backgroundImage: `url(${postImages[0]})` }}
+              aria-hidden="true"
+            />
+
+            {!loadedImages.has(0) && !brokenImages.has(0) && (
+              <div className="absolute inset-0 z-[2] skeleton-shimmer bg-slate-200 dark:bg-slate-800" aria-hidden />
+            )}
+
+            <button
+              type="button"
+              onClick={() => openImageViewer(0)}
+              className="relative z-[1] w-full flex items-center justify-center cursor-pointer focus:outline-none group p-0 bg-transparent border-0"
+              title="Click to view full image"
             >
-              {!loadedImages.has(idx) && !brokenImages.has(idx) && (
-                <div className="absolute inset-0 z-[1] skeleton-shimmer bg-slate-200 dark:bg-slate-800" aria-hidden />
+              {brokenImages.has(0) ? (
+                <div className="w-full h-48 flex items-center justify-center bg-slate-200 dark:bg-slate-900 text-slate-400 text-xs font-medium">
+                  Image unavailable
+                </div>
+              ) : (
+                <img
+                  src={postImages[0]}
+                  alt="Post media"
+                  className="w-full h-auto max-h-[380px] sm:max-h-[420px] object-contain block mx-auto transition-transform duration-300 group-hover:scale-[1.008]"
+                  loading="lazy"
+                  decoding="async"
+                  ref={(el) => {
+                    if (el && el.complete && el.naturalWidth > 0 && !loadedImages.has(0)) {
+                      setLoadedImages((prev) => {
+                        if (prev.has(0)) return prev;
+                        const next = new Set(prev);
+                        next.add(0);
+                        return next;
+                      });
+                    }
+                  }}
+                  onLoad={() => setLoadedImages((prev) => new Set(prev).add(0))}
+                  onError={() => setBrokenImages((prev) => new Set(prev).add(0))}
+                />
               )}
-              <button type="button" onClick={() => openImageViewer(idx)} className="absolute inset-0 w-full h-full block cursor-pointer">
-                {brokenImages.has(idx) ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-200 dark:bg-slate-900 text-slate-400 text-xs font-medium">
-                    Image unavailable
-                  </div>
-                ) : (
-                  <img
-                    src={img}
-                    alt={`Post media ${idx}`}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ opacity: 1, visibility: 'visible' }}
-                    loading="lazy"
-                    decoding="async"
-                    ref={(el) => {
-                      if (el && el.complete && el.naturalWidth > 0 && !loadedImages.has(idx)) {
-                        setLoadedImages((prev) => {
-                          if (prev.has(idx)) return prev;
-                          const next = new Set(prev);
-                          next.add(idx);
-                          return next;
-                        });
-                      }
-                    }}
-                    onLoad={() => setLoadedImages((prev) => new Set(prev).add(idx))}
-                    onError={() => setBrokenImages((prev) => new Set(prev).add(idx))}
-                  />
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-3 sm:mb-4 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            {postImages.map((img, idx) => (
+              <div
+                key={`${postId}-img-${idx}`}
+                className="post-image-container post-image-container--grid"
+              >
+                {!loadedImages.has(idx) && !brokenImages.has(idx) && (
+                  <div className="absolute inset-0 z-[1] skeleton-shimmer bg-slate-200 dark:bg-slate-800" aria-hidden />
                 )}
-              </button>
-            </div>
-          ))}
-        </div>
+                <button type="button" onClick={() => openImageViewer(idx)} className="absolute inset-0 w-full h-full block cursor-pointer">
+                  {brokenImages.has(idx) ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-200 dark:bg-slate-900 text-slate-400 text-xs font-medium">
+                      Image unavailable
+                    </div>
+                  ) : (
+                    <img
+                      src={img}
+                      alt={`Post media ${idx}`}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      loading="lazy"
+                      decoding="async"
+                      ref={(el) => {
+                        if (el && el.complete && el.naturalWidth > 0 && !loadedImages.has(idx)) {
+                          setLoadedImages((prev) => {
+                            if (prev.has(idx)) return prev;
+                            const next = new Set(prev);
+                            next.add(idx);
+                            return next;
+                          });
+                        }
+                      }}
+                      onLoad={() => setLoadedImages((prev) => new Set(prev).add(idx))}
+                      onError={() => setBrokenImages((prev) => new Set(prev).add(idx))}
+                    />
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {/* Inline feed video — plays in place, no popup */}

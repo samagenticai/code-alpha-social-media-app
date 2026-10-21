@@ -569,13 +569,13 @@ html.dark .post-image-container {
 }
 
 .post-image-container--single {
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 16 / 9;
   max-height: 380px;
 }
 
 .post-image-container--grid {
   aspect-ratio: 1 / 1;
-  max-height: 12rem;
+  max-height: 14rem;
 }
 
 @media (min-width: 640px) {
@@ -585,12 +585,12 @@ html.dark .post-image-container {
   }
 
   .post-image-container--single {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 9;
     max-height: 420px;
   }
 
   .post-image-container--grid {
-    max-height: 14rem;
+    max-height: 18rem;
   }
 
   .reel-card-inner video,
